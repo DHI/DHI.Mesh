@@ -1,6 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using GeoAPI.Geometries;
+#if NTS173
+using GisSharpBlog.NetTopologySuite.Geometries;
+using GisSharpBlog.NetTopologySuite.Index.Strtree;
+#else
 using NetTopologySuite.Index.Strtree;
+#endif
 
 namespace DHI.Mesh
 {
@@ -14,7 +20,11 @@ namespace DHI.Mesh
   {
     private MeshData _mesh;
 
+#if NTS173
+    private STRtree _elementSearchTree;
+#else
     private STRtree<MeshElement> _elementSearchTree;
+#endif
 
     /// <summary>
     /// Create searcher for provided <paramref name="mesh"/>
@@ -29,7 +39,11 @@ namespace DHI.Mesh
     /// </summary>
     public void SetupElementSearch()
     {
+#if NTS173
+      _elementSearchTree = new STRtree();
+#else
       _elementSearchTree = new STRtree<MeshElement>();
+#endif
       for (int i = 0; i < _mesh.Elements.Count; i++)
       {
         MeshElement element = _mesh.Elements[i];
@@ -55,12 +69,21 @@ namespace DHI.Mesh
     {
       // Find potential elements for (x,y) point
       Envelope targetEnvelope       = new Envelope(x, x, y, y);
+
+#if NTS173
+      IList potentialSourceElmts = _elementSearchTree.Query(targetEnvelope);
+#else
       IList<MeshElement> potentialSourceElmts = _elementSearchTree.Query(targetEnvelope);
+#endif
 
       // Loop over all potential elements
       for (int i = 0; i < potentialSourceElmts.Count; i++)
       {
+#if NTS173
+        MeshElement element = (MeshElement)potentialSourceElmts[i];
+#else
         MeshElement element = potentialSourceElmts[i];
+#endif
 
         // Check if element includes the (x,y) point
         if (element.Includes(x, y))
