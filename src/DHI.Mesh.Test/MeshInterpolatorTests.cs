@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using NUnit.Framework;
 
 namespace DHI.Mesh.Test
@@ -23,8 +20,8 @@ namespace DHI.Mesh.Test
 
       string triMesh  = UnitTestHelper.TestDataDir + "odense_rough.mesh";
       string quadMesh = UnitTestHelper.TestDataDir + "odense_rough_quads.mesh";
-      //NodeInterpolationTest(triMesh,  CircularValueTypes.Normal);
-      //NodeInterpolationTest(quadMesh, CircularValueTypes.Normal);
+      NodeInterpolationTest(triMesh,  CircularValueTypes.Normal);
+      NodeInterpolationTest(quadMesh, CircularValueTypes.Normal);
       NodeInterpolationTest(triMesh,  CircularValueTypes.Degrees180);
       NodeInterpolationTest(quadMesh, CircularValueTypes.Degrees180);
       NodeInterpolationTest(triMesh,  CircularValueTypes.Degrees360);
@@ -37,10 +34,11 @@ namespace DHI.Mesh.Test
 
     public void NodeInterpolationTest(string meshFileName, CircularValueTypes cvt = CircularValueTypes.Normal)
     {
+      // Source mesh
       MeshFile meshFile = MeshFile.ReadMesh(meshFileName);
       MeshData mesh     = meshFile.ToMeshData();
 
-      // Disable clipping, allow for extrapolation on boundary nodes
+      // Allow for extrapolation on boundary nodes (disable clipping)
       MeshNodeInterpolation interpolation = new MeshNodeInterpolation(mesh) { AllowExtrapolation = true,};
       interpolation.Setup();
       Interpolator nodeInterpolator = interpolation.NodeInterpolator;
@@ -52,6 +50,7 @@ namespace DHI.Mesh.Test
       double yMin = mesh.Nodes.Select(mn => mn.Y).Min();
       double yMax = mesh.Nodes.Select(mn => mn.Y).Max();
 
+      // Function over the (x,y) plane.
       Func<double, double, double> function = ValueFunction(cvt, xMin, yMin, xMax, yMax);
 
       // Calculate element center values
@@ -114,13 +113,16 @@ namespace DHI.Mesh.Test
 
     public void InterpolationTest(string sourceMeshFileName, string targetMeshFileName, CircularValueTypes cvt = CircularValueTypes.Normal)
     {
+      // Source mesh
       MeshFile meshFile = MeshFile.ReadMesh(sourceMeshFileName);
       MeshData mesh = meshFile.ToMeshData();
       mesh.BuildDerivedData();
 
+      // Mesh to interpolate to
       MeshFile targetFile = MeshFile.ReadMesh(targetMeshFileName);
       MeshData targetmesh = targetFile.ToMeshData();
 
+      // Setup interpolator
       MeshInterpolator2D interpolator = new MeshInterpolator2D(mesh) { CircularType = cvt, AllowExtrapolation = true };
       interpolator.SetupNodeInterpolation();
       interpolator.SetTarget(targetmesh);
@@ -131,9 +133,10 @@ namespace DHI.Mesh.Test
       double yMin = mesh.Nodes.Select(mn => mn.Y).Min();
       double yMax = mesh.Nodes.Select(mn => mn.Y).Max();
 
+      // Function over the (x,y) plane.
       Func<double, double, double> function = ValueFunction(cvt, xMin, yMin, xMax, yMax);
 
-      // Calculate element center values
+      // Calculate element center values of function
       double[] elmtVals = new double[mesh.Elements.Count];
       for (int i = 0; i < mesh.Elements.Count; i++)
       {
