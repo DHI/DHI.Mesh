@@ -1,0 +1,136 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{98A45F7E-D2C1-49A4-AFBD-7C327B32ADBF}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>DHI.DfsUtil</RootNamespace>
+    <AssemblyName>DHI.DfsUtil</AssemblyName>
+    <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;NTS173</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x64\Debug\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;NTS173</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <OutputPath>bin\x64\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="DHI.Generic.MikeZero.DFS, Version=17.0.0.0, Culture=neutral, PublicKeyToken=c513450b5d0bf0bf, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
+    <Reference Include="DHI.Generic.MikeZero.EUM, Version=17.0.0.0, Culture=neutral, PublicKeyToken=c513450b5d0bf0bf, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
+    <Reference Include="DHI.Mike.Install, Version=1.0.0.0, Culture=neutral, PublicKeyToken=c513450b5d0bf0bf, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
+    <Reference Include="GeoAPI, Version=1.1.0.0, Culture=neutral, PublicKeyToken=a1a0da7def465678, processorArchitecture=MSIL" />
+    <Reference Include="NetTopologySuite, Version=1.7.3.31740, Culture=neutral, PublicKeyToken=f580a05016ebada1, processorArchitecture=MSIL" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\DHI.Mesh\CircularValueHandler.cs">
+      <Link>CircularValueHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\DHI.Mesh\Interpolator.cs">
+      <Link>Interpolator.cs</Link>
+    </Compile>
+    <Compile Include="..\DHI.Mesh\InterpolatorDouble.cs">
+      <Link>InterpolatorDouble.cs</Link>
+    </Compile>
+    <Compile Include="..\DHI.Mesh\InterpolatorFloat.cs">
+      <Link>InterpolatorFloat.cs</Link>
+    </Compile>
+    <Compile Include="..\DHI.Mesh\MeshData.cs">
+      <Link>MeshData.cs</Link>
+    </Compile>
+    <Compile Include="..\DHI.Mesh\MeshElement.cs">
+      <Link>MeshElement.cs</Link>
+    </Compile>
+    <Compile Include="..\DHI.Mesh\MeshExtensions.cs">
+      <Link>MeshExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\DHI.Mesh\MeshFace.cs">
+      <Link>MeshFace.cs</Link>
+    </Compile>
+    <Compile Include="..\DHI.Mesh\MeshFile.cs">
+      <Link>MeshFile.cs</Link>
+    </Compile>
+    <Compile Include="..\DHI.Mesh\MeshFileBuilder.cs">
+      <Link>MeshFileBuilder.cs</Link>
+    </Compile>
+    <Compile Include="..\DHI.Mesh\MeshInterpolator2D.cs">
+      <Link>MeshInterpolator2D.cs</Link>
+    </Compile>
+    <Compile Include="..\DHI.Mesh\MeshInterpolator2DDouble.cs">
+      <Link>MeshInterpolator2DDouble.cs</Link>
+    </Compile>
+    <Compile Include="..\DHI.Mesh\MeshInterpolator2DFloat.cs">
+      <Link>MeshInterpolator2DFloat.cs</Link>
+    </Compile>
+    <Compile Include="..\DHI.Mesh\MeshNode.cs">
+      <Link>MeshNode.cs</Link>
+    </Compile>
+    <Compile Include="..\DHI.Mesh\MeshNodeInterpolation.cs">
+      <Link>MeshNodeInterpolation.cs</Link>
+    </Compile>
+    <Compile Include="..\DHI.Mesh\MeshSearcher.cs">
+      <Link>MeshSearcher.cs</Link>
+    </Compile>
+    <Compile Include="..\DHI.Mesh\MeshUnit.cs">
+      <Link>MeshUnit.cs</Link>
+    </Compile>
+    <Compile Include="DfsDiff.cs" />
+    <Compile Include="DfsuInterp.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
