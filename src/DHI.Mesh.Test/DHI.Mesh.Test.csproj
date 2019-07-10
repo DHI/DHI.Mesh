@@ -71,6 +71,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="MeshBoundaryTests.cs" />
     <Compile Include="MeshDataTests.cs" />
     <Compile Include="MeshInterpolatorTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
