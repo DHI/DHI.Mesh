@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DHI.DfsUtil
 {
@@ -30,6 +26,7 @@ Usage
 Tools:
 "
         + DfsuInterp.InterpolateUsage
+        + DfsuInterp.DfsuDiffUsage
         + DfsDiff.CreateDiffFileUsage
 ;
 
@@ -58,6 +55,12 @@ Tools:
       if (hyphenChars.IndexOf(arg0[0]) >= 0)
         arg0 = "-" + arg0.Substring(1);
 
+      if (arg0.StartsWith("-debug"))
+      {
+        arg0 = arg0.Substring(6);
+        System.Diagnostics.Debugger.Launch();
+      }
+
       if (arg0.StartsWith("-dfsuinterp"))
       {
         if (args.Length != 4)
@@ -66,6 +69,15 @@ Tools:
           PrintUsage();
         }
         DfsuInterp.Interpolate(args[1], args[2], args[3]);
+      }
+      else if (arg0.StartsWith("-dfsudiff"))
+      {
+        if (args.Length != 4)
+        {
+          Console.Out.WriteLine("-dfsudiff requires 3 arguments.");
+          PrintUsage();
+        }
+        DfsuInterp.DfsuDiff(args[1], args[2], args[3]);
       }
       else if (arg0.StartsWith("-diff"))
       {
