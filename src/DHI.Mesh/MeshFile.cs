@@ -227,6 +227,20 @@ namespace DHI.Mesh
     private static readonly Regex _header2012 = new Regex(@"(\d+)\s+(\d+)\s+(\d+)\s+(.+)", RegexOptions.Compiled);
     private static readonly Regex _header2011 = new Regex(@"(\d+)\s+(.+)", RegexOptions.Compiled);
 
+    /// <summary>
+    /// Read .mesh file from stream and load all data.
+    /// <para>
+    /// If an element specifies a node number of zero, that node number is ignored, and
+    /// does not become a part of the mesh data structure. That is the case for e.g.
+    /// mixed triangular/quadrilateral meshes, where all elements specify 4 nodes, 
+    /// and triangular elements specifies the last node as zero.
+    /// </para>
+    /// </summary>
+    public void Read(Stream stream, string streamId = "")
+    {
+      TextReader tr = new StreamReader(stream, System.Text.Encoding.Default);
+      Read(tr, streamId);
+    }
 
     /// <summary>
     /// Read .mesh file and load all data.
@@ -240,6 +254,20 @@ namespace DHI.Mesh
     public void Read(string filename)
     {
       TextReader tr = new StreamReader(filename, System.Text.Encoding.Default);
+      Read(tr, filename);
+    }
+
+    /// <summary>
+    /// Read .mesh file from reader and load all data.
+    /// <para>
+    /// If an element specifies a node number of zero, that node number is ignored, and
+    /// does not become a part of the mesh data structure. That is the case for e.g.
+    /// mixed triangular/quadrilateral meshes, where all elements specify 4 nodes, 
+    /// and triangular elements specifies the last node as zero.
+    /// </para>
+    /// </summary>
+    public void Read(TextReader tr, string filename)
+    {
       string line;
       try
       {
