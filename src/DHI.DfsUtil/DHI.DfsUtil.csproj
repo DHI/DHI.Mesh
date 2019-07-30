@@ -85,6 +85,9 @@
     <Compile Include="..\DHI.Mesh\InterpolatorFloat.cs">
       <Link>InterpolatorFloat.cs</Link>
     </Compile>
+    <Compile Include="..\DHI.Mesh\MeshBoundary.cs">
+      <Link>MeshBoundary.cs</Link>
+    </Compile>
     <Compile Include="..\DHI.Mesh\MeshData.cs">
       <Link>MeshData.cs</Link>
     </Compile>

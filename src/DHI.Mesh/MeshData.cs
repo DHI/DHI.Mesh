@@ -71,37 +71,40 @@ namespace DHI.Mesh
           Y = y[i],
           Z = z[i],
           Code = code[i],
-          Elements = new List<MeshElement>(),
         };
         meshData.Nodes.Add(node);
       }
 
       for (int ielmt = 0; ielmt < elementIds.Length; ielmt++)
       {
+        int[] nodeInElmt = connectivity[ielmt];
+        int numNodesInElmt = nodeInElmt.Length;
+
         var element = new MeshElement()
         {
           Index = ielmt,
           Id = elementIds[ielmt],
           ElementType = elementTypes[ielmt],
-          Nodes = new List<MeshNode>(connectivity[ielmt].Length),
+          Nodes = new List<MeshNode>(numNodesInElmt),
         };
         double xc = 0;
         double yc = 0;
         double zc = 0;
 
-        for (int j = 0; j < connectivity[ielmt].Length; j++)
+        for (int j = 0; j < numNodesInElmt; j++)
         {
-          MeshNode meshNode = meshData.Nodes[connectivity[ielmt][j]-1];
+          int nodeIndex = nodeInElmt[j]-1;
+          MeshNode meshNode = meshData.Nodes[nodeIndex];
           element.Nodes.Add(meshNode);
-          meshNode.Elements.Add(element);
           xc += meshNode.X;
           yc += meshNode.Y;
           zc += meshNode.Z;
         }
 
-        element.XCenter = xc / connectivity[ielmt].Length;
-        element.YCenter = yc / connectivity[ielmt].Length;
-        element.ZCenter = zc / connectivity[ielmt].Length;
+        double inumNodesInElmt = 1.0 / numNodesInElmt;
+        element.XCenter = xc * inumNodesInElmt; // / numNodesInElmt;
+        element.YCenter = yc * inumNodesInElmt; // / numNodesInElmt;
+        element.ZCenter = zc * inumNodesInElmt; // / numNodesInElmt;
 
         meshData.Elements.Add(element);
       }
@@ -111,10 +114,29 @@ namespace DHI.Mesh
     }
 
     /// <summary>
-    /// Build derived mesh data, especially the <see cref="MeshFace"/> lists.
+    /// Build derived mesh data, the <see cref="MeshNode.Elements"/> and <see cref="MeshFace"/> lists.
     /// </summary>
     public void BuildDerivedData()
     {
+      // Build up element list in nodes
+      for (int i = 0; i < Nodes.Count; i++)
+      {
+        Nodes[i].Elements = new List<MeshElement>();
+      }
+      for (int ielmt = 0; ielmt < Elements.Count; ielmt++)
+      {
+        MeshElement element = Elements[ielmt];
+        List<MeshNode> nodeInElmt = element.Nodes;
+        int   numNodesInElmt      = nodeInElmt.Count;
+
+        for (int j = 0; j < numNodesInElmt; j++)
+        {
+          MeshNode meshNode = nodeInElmt[j];
+          meshNode.Elements.Add(element);
+        }
+      }
+
+      // Build up face lists
       Faces = new List<MeshFace>();
 
       // Preallocate list of face on all nodes - used in next loop
@@ -139,49 +161,7 @@ namespace DHI.Mesh
       for (int i = 0; i < Faces.Count; i++)
       {
         MeshFace face = Faces[i];
-
-        // If the RightElement exists, this face is an internal face
-        if (face.RightElement != null)
-        {
-          continue;
-        }
-
-        // RightElement does not exist, so it is a boundary face.
-        int fromCode = face.FromNode.Code;
-        int toCode   = face.ToNode.Code;
-
-        // True if "invalid" boundary face, then set it as internal face.
-        bool internalFace = false;
-
-        if (fromCode == 0)
-        {
-          internalFace = true;
-          throw new Exception (string.Format("Invalid mesh: Boundary face, from node {0} to node {1} is missing a boundary code on node {0}. " +
-                                   "Hint: Modify boundary code for node {0}",
-                                   face.FromNode.Index + 1, face.ToNode.Index + 1));
-        }
-        if (toCode == 0)
-        {
-          internalFace = true;
-          throw new Exception(string.Format("Invalid mesh: Boundary face, from node {0} to node {1} is missing a boundary code on node {1}. " +
-                                   "Hint: Modify boundary code for node {1}",
-                                   face.FromNode.Index + 1, face.ToNode.Index + 1));
-        }
-
-        int faceCode;
-
-        // Find face code:
-        // 1) In case any of the nodes is a land node (code value 1) then the
-        //    boundary face is a land face, given boundary code value 1.
-        // 2) For boundary faces (if both fromNode and toNode have code values larger than 1), 
-        //    the face code is the boundary code value of toNode.
-        if (fromCode == 1 || toCode == 1)
-          faceCode = 1;
-        else
-          faceCode = toCode;
-
-        if (!internalFace)
-          face.Code = faceCode;
+        face.SetBoundaryCode();
       }
 
       // Add face to the elements list of faces
@@ -209,13 +189,13 @@ namespace DHI.Mesh
       List<MeshFace> fromNodeFaces = fromNode.Faces;
       List<MeshFace> toNodeFaces = toNode.Faces;
 
-      if (fromNodeFaces.FindIndex(mf => mf.ToNode == toNode) >= 0)
-      {
-        throw new Exception (string.Format("Invalid mesh: Double face, from node {0} to node {1}. " +
-                                 "Hint: Probably too many nodes was merged into one of the two face nodes." +
-                                 "Try decrease node merge tolerance value",
-                                 fromNode.Index + 1, toNode.Index + 1));
-      }
+      //if (fromNodeFaces.FindIndex(mf => mf.ToNode == toNode) >= 0)
+      //{
+      //  throw new Exception (string.Format("Invalid mesh: Double face, from node {0} to node {1}. " +
+      //                           "Hint: Probably too many nodes was merged into one of the two face nodes." +
+      //                           "Try decrease node merge tolerance value",
+      //                           fromNode.Index + 1, toNode.Index + 1));
+      //}
       
       // Try find "reverse face" going from from-node to to-node.
       int reverseFaceIndex = toNodeFaces.FindIndex(mf => mf.ToNode == fromNode);
@@ -241,6 +221,43 @@ namespace DHI.Mesh
       }
     }
 
+    /// <summary>
+    /// Create and add a face - special version for <see cref="MeshBoundaryExtensions.GetBoundaryFaces"/>
+    /// <para>
+    /// A face is only "added once", i.e. when two elements share the face, it is found twice,
+    /// once defined as "toNode"-"fromNode" and once as "fromNode"-"toNode". The second time,
+    /// the existing face is being reused, and the element is added as the <see cref="MeshFace.RightElement"/>
+    /// </para>
+    /// <para>
+    /// The <see cref="MeshFace"/> is added to the global list of faces, and also to tne nodes list of faces.
+    /// </para>
+    /// </summary>
+    internal static void AddFace(MeshElement element, MeshNode fromNode, MeshNode toNode, List<MeshFace>[] nodeFaces)
+    {
+      List<MeshFace> fromNodeFaces = nodeFaces[fromNode.Index];
+      List<MeshFace> toNodeFaces = nodeFaces[toNode.Index];
 
+      // Try find "reverse face" going from from-node to to-node.
+      int reverseFaceIndex = toNodeFaces.FindIndex(mf => mf.ToNode == fromNode);
+      if (reverseFaceIndex >= 0)
+      {
+        // Found reverse face, reuse it and add the elment as the RightElement
+        MeshFace reverseFace = toNodeFaces[reverseFaceIndex];
+        reverseFace.RightElement = element;
+      }
+      else
+      {
+        // Found new face, set element as LeftElement and add it to both from-node and to-node
+        MeshFace meshFace = new MeshFace()
+        {
+          FromNode = fromNode,
+          ToNode = toNode,
+          LeftElement = element,
+        };
+
+        fromNodeFaces.Add(meshFace);
+        //toNodeFaces.Add(meshFace);
+      }
+    }
   }
 }

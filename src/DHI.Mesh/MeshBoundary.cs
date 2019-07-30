@@ -14,54 +14,142 @@ namespace DHI.Mesh
     /// Code value of mesh boundary segments
     /// </summary>
     public int Code;
+
     /// <summary>
     /// Mesh boundary segments
     /// </summary>
     public List<List<MeshFace>> Segments = new List<List<MeshFace>>();
+  }
 
+  public static class MeshBoundaryExtensions
+  {
+    /// <summary>
+    /// Return all boundary faces. Unsorted
+    /// </summary>
+    public static List<MeshFace> GetBoundaryFaces(this MeshData meshData)
+    {
+      List<MeshFace>[] nodeFaces = new List<MeshFace>[meshData.Nodes.Count];
+
+      // Preallocate list of face on all nodes - used in next loop
+      for (int i = 0; i < meshData.Nodes.Count; i++)
+        nodeFaces[i] = new List<MeshFace>();
+
+      // Create all potential boundary faces - those having
+      // boundary code on both to-node and from-node
+      // (not all those need to be boundary faces).
+      for (int ielmt = 0; ielmt < meshData.Elements.Count; ielmt++)
+      {
+        MeshElement    element   = meshData.Elements[ielmt];
+        List<MeshNode> elmtNodes = element.Nodes;
+        for (int j = 0; j < elmtNodes.Count; j++)
+        {
+          MeshNode fromNode = elmtNodes[j];
+          MeshNode toNode   = elmtNodes[(j + 1) % elmtNodes.Count];
+          if (fromNode.Code > 0 && toNode.Code > 0)
+            MeshData.AddFace(element, fromNode, toNode, nodeFaces);
+        }
+      }
+
+      // Figure out boundary code and store all boundary faces
+      List<MeshFace> faces = new List<MeshFace>();
+      for (int i = 0; i < nodeFaces.Length; i++)
+      {
+        List<MeshFace> thisNodeFaces = nodeFaces[i];
+        for (int j = 0; j < thisNodeFaces.Count; j++)
+        {
+          MeshFace face = thisNodeFaces[j];
+          // Only take those with fromNode matching this node - 
+          // otherwise they are taken twice.
+          //if (face.FromNode.Index == i)
+          {
+            face.SetBoundaryCode();
+            if (face.IsBoundaryFace())
+              faces.Add(face);
+          }
+        }
+      }
+
+      return faces;
+    }
 
     /// <summary>
-    /// Build list of face boundaries of <paramref name="mesh"/>
+    /// Build list of <see cref="MeshBoundary"/>, one for each boundary code, based on the mesh <paramref name="mesh"/>
     /// </summary>
-    public static List<MeshBoundary> BuildBoundaryList(MeshData mesh)
+    public static List<MeshBoundary> BuildBoundaryList(this MeshData mesh)
     {
-      if (mesh.Faces == null)
-        mesh.BuildDerivedData();
+      List<MeshFace> meshFaces;
+      if (mesh.Faces != null)
+        meshFaces = mesh.Faces;
+      else
+        meshFaces = GetBoundaryFaces(mesh);
 
-      // Sort all faces on boundary code
-      Dictionary<int, List<MeshFace>> bcs = new Dictionary<int, List<MeshFace>>();
+      return BuildBoundaryList(meshFaces);
+    }
 
-      for (int i = 0; i < mesh.Faces.Count; i++)
+    /// <summary>
+    /// Build list of <see cref="MeshBoundary"/>, one for each boundary code, based on the <paramref name="meshFaces"/>
+    /// <para>
+    /// The <paramref name="meshFaces"/> need only contain boundary faces. Internal faces are ignored.
+    /// </para>
+    /// </summary>
+    public static List<MeshBoundary> BuildBoundaryList(List<MeshFace> meshFaces)
+    {
+      // Sort all faces on boundary code, assuming code numbers does not grow very big.
+      //Dictionary<int, List<MeshFace>> bcs = new Dictionary<int, List<MeshFace>>();
+      List<List<MeshFace>> bcs = new List<List<MeshFace>>();
+
+      for (int i = 0; i < meshFaces.Count; i++)
       {
-        MeshFace meshFace = mesh.Faces[i];
+        MeshFace meshFace = meshFaces[i];
         if (meshFace.IsBoundaryFace())
         {
-          List<MeshFace> boundaryFaces;
-          if (!bcs.TryGetValue(meshFace.Code, out boundaryFaces))
+          //List<MeshFace> boundaryFaces;
+          //if (!bcs.TryGetValue(meshFace.Code, out boundaryFaces))
+          //{
+          //  boundaryFaces = new List<MeshFace>();
+          //  bcs.Add(meshFace.Code, boundaryFaces);
+          //}
+          //boundaryFaces.Add(meshFace);
+
+          while (meshFace.Code + 1 > bcs.Count)
           {
-            boundaryFaces = new List<MeshFace>();
-            bcs.Add(meshFace.Code, boundaryFaces);
+            List<MeshFace> boundaryFaces = new List<MeshFace>();
+            bcs.Add(boundaryFaces);
           }
-          boundaryFaces.Add(meshFace);
+          bcs[meshFace.Code].Add(meshFace);
         }
       }
 
       List<MeshBoundary> boundaries = new List<MeshBoundary>();
 
       // For each boundary code, find segments
-      foreach (KeyValuePair<int, List<MeshFace>> bfkvp in bcs)
+
+      //foreach (KeyValuePair<int, List<MeshFace>> bfkvp in bcs)
+      //{
+
+      //  int code = bfkvp.Key;
+      //  List<MeshFace> faces = bfkvp.Value;
+
+      for (int ic = 0; ic < bcs.Count; ic++)
       {
-        int code = bfkvp.Key;
-        List<MeshFace> faces = bfkvp.Value;
+        int code = ic;
+        List<MeshFace> faces = bcs[ic];
+
+        if (faces.Count == 0)
+          continue;
 
         // Sort faces on FromNode index
-        faces.Sort((f1, f2) => f1.FromNode.Index.CompareTo(f2.FromNode.Index));
-        
+        faces.Sort(FaceSortComparer);
+
         // Create searchable array of FromNode indices
-        int[] fromNodes = faces.Select(f => f.FromNode.Index).ToArray();
-        
+        int[] fromNodes = new int[faces.Count];
+        for (int i = 0; i < faces.Count; i++)
+        {
+          fromNodes[i] = faces[i].FromNode.Index;
+        }
+
         // Matching array telling which boundary segment a given face belongs to
-        int[] faceSegmentIndex   = new int[faces.Count];
+        int[] faceSegmentIndex = new int[faces.Count];
         for (int ii = 0; ii < faceSegmentIndex.Length; ii++) faceSegmentIndex[ii] = -1;
 
         // All segments with this boundary code
@@ -70,14 +158,13 @@ namespace DHI.Mesh
         // Make sure to visit all faces
         for (int i = 0; i < faces.Count; i++)
         {
-
           // Check if this face has already been visited.
           if (faceSegmentIndex[i] >= 0)
             continue;
 
           // Start new boundary segment with face i
           int currentSegmentIndex = segments.Count;
-          int currentFaceIndex = i;
+          int currentFaceIndex    = i;
           LinkedList<int> currentSegment = new LinkedList<int>();
           // Add current face to segment
           currentSegment.AddLast(currentFaceIndex);
@@ -86,14 +173,14 @@ namespace DHI.Mesh
           while (true)
           {
             // Try find next face, which is the face with fromNode matching currentFace.ToNode
-            MeshFace currentFace = faces[currentFaceIndex];
-            int nextFaceIndex = Array.BinarySearch(fromNodes, currentFace.ToNode.Index);
+            MeshFace currentFace   = faces[currentFaceIndex];
+            int      nextFaceIndex = Array.BinarySearch(fromNodes, currentFace.ToNode.Index);
 
             if (nextFaceIndex < 0)
             {
               // No to-node, we are done with this segment
               segments.Add(currentSegment);
-              break; 
+              break;
             }
 
             // Check if the next face is already part of a segment
@@ -111,18 +198,20 @@ namespace DHI.Mesh
               // start of the nextFace segment
 
               int nextFaceSegment = faceSegmentIndex[nextFaceIndex];
-              // Move all from current segment to 
+              // Move all faces from currentSegment to nextFaceSegment
               LinkedListNode<int> thisSegmentListNode = currentSegment.Last;
               while (thisSegmentListNode != null)
               {
                 int faceToMoveIndex = thisSegmentListNode.Value;
                 segments[nextFaceSegment].AddFirst(faceToMoveIndex);
                 faceSegmentIndex[faceToMoveIndex] = nextFaceSegment;
-                thisSegmentListNode = thisSegmentListNode.Previous;
+                thisSegmentListNode               = thisSegmentListNode.Previous;
               }
+
               break; // Break out of while (true) loop
             }
 
+            // Next face is not already part of a segment, add it to the end of this segment
             // Make nextFace to currentFace - add it to the list of current segments.
             currentFaceIndex = nextFaceIndex;
             currentSegment.AddLast(currentFaceIndex);
@@ -130,6 +219,7 @@ namespace DHI.Mesh
           }
         }
 
+        // Create mesh boundary with segments
         MeshBoundary meshBoundary = new MeshBoundary() {Code = code};
         foreach (LinkedList<int> segment in segments)
         {
@@ -140,16 +230,22 @@ namespace DHI.Mesh
           {
             segmentFaces.Add(faces[currentFace]);
           }
+
           meshBoundary.Segments.Add(segmentFaces);
         }
-        
-        boundaries.Add(meshBoundary);
 
+        boundaries.Add(meshBoundary);
       }
 
+      // Sort on boundary codes
       boundaries.Sort((mb1, mb2) => mb1.Code.CompareTo(mb2.Code));
       return boundaries;
-
     }
+
+    private static int FaceSortComparer(MeshFace f1, MeshFace f2)
+    {
+      return f1.FromNode.Index.CompareTo(f2.FromNode.Index);
+    }
+
   }
 }
