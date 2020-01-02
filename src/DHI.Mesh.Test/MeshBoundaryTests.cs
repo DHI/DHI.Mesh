@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -28,7 +29,7 @@ plot "out_odense_rough-bnd.txt" index 0 with linespoints linestyle 1, '' index 1
       MeshFile meshFile = MeshFile.ReadMesh(triMesh);
       MeshData mesh     = meshFile.ToMeshData();
 
-      List<MeshBoundary> boundaries = MeshBoundary.BuildBoundaryList(mesh);
+      List<MeshBoundary> boundaries = mesh.BuildBoundaryList();
 
       Assert.AreEqual(2, boundaries.Count);
       Assert.AreEqual(1, boundaries[0].Code);

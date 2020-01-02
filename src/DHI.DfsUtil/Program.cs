@@ -8,14 +8,14 @@ namespace DHI.DfsUtil
     /// <summary> Static constructor </summary>
     static Program()
     {
-      // The setup method will make your application find the MIKE assemblies at runtime.
-      // The first call of the setup method takes precedense. Any subsequent calls will be ignored.
-      // It must be called BEFORE any method using MIKE libraries is called, i.e. it is not sufficient
-      // to call it as the first thing in that method using the MIKE libraries. Often this can be achieved
-      // by having this code in the static constructor.
-      // If MIKE Core is x-copy deployed with the application, this is not required.
-      if (!DHI.Mike.Install.MikeImport.Setup(17, DHI.Mike.Install.MikeProducts.MikeCore))
-        throw new Exception("Cannot find a proper MIKE installation");
+      //// The setup method will make your application find the MIKE assemblies at runtime.
+      //// The first call of the setup method takes precedense. Any subsequent calls will be ignored.
+      //// It must be called BEFORE any method using MIKE libraries is called, i.e. it is not sufficient
+      //// to call it as the first thing in that method using the MIKE libraries. Often this can be achieved
+      //// by having this code in the static constructor.
+      //// If MIKE Core is x-copy deployed with the application, this is not required.
+      //if (!DHI.Mike.Install.MikeImport.Setup(17, DHI.Mike.Install.MikeProducts.MikeCore))
+      //  throw new Exception("Cannot find a proper MIKE installation");
     }
 
     public static readonly string usage =
