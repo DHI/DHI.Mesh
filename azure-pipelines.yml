@@ -4,16 +4,56 @@
 # https://aka.ms/yaml
 
 trigger:
-- master
+  branches:
+    include:
+    - master
+    - develop
+  paths:
+    include:
+    - src/DHI.Mesh/*
+    - src/DHI.Mesh.Test/*
 
 pool:
-  vmImage: 'ubuntu-latest'
+  name: Hosted VS2017
+
+variables:
+  BuildConfiguration: release
 
 steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+- task: DotNetCoreCLI@2
+  displayName: 'dotnet restore'
+  inputs:
+    command: restore
+    projects: '**/DHI.Mesh.csproj'
+    
+- task: DotNetCoreCLI@2
+  displayName: 'dotnet build'
+  inputs:
+    projects: '**/DHI.Mesh.csproj'
+    arguments: '--configuration $(BuildConfiguration) --no-restore'
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+- task: DotNetCoreCLI@2
+  displayName: 'dotnet test'
+  inputs:
+    command: test
+    projects: '**/*Test*.csproj'
+    arguments: '--configuration $(BuildConfiguration)'
+
+- task: DotNetCoreCLI@2
+  displayName: 'dotnet pack'
+  inputs:
+    command: pack
+    packagesToPack: '**/DHI.Mesh.csproj'
+    versioningScheme: byPrereleaseNumber
+    minorVersion: 0
+
+- task: DotNetCoreCLI@2
+  displayName: 'dotnet push'
+  inputs:
+    command: push
+    publishVstsFeed: 'bdb47caa-942e-42e3-803f-8bcae759f218'
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact'
+  inputs:
+    PathtoPublish: '$(build.artifactstagingdirectory)'
