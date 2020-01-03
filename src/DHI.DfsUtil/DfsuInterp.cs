@@ -2,9 +2,8 @@
 using DHI.Generic.MikeZero;
 using DHI.Generic.MikeZero.DFS;
 using DHI.Generic.MikeZero.DFS.dfsu;
-using DHI.Mesh;
 
-namespace DHI.DfsUtil
+namespace DHI.Mesh.DfsUtil
 {
   class DfsuInterp
   {
@@ -13,7 +12,7 @@ namespace DHI.DfsUtil
 @"
     -dfsuinterp: Interpolate dfsu file to another mesh:
 
-        DHI.DfsUtil -dfsuinterp [sourceFilename] [targetMeshFilename] [targetFilename]
+        DHI.Mesh.DfsUtil -dfsuinterp [sourceFilename] [targetMeshFilename] [targetFilename]
 
         Interpolate values from 'sourceFilename' to mesh defined by 
         'targetMeshFilename', and store it in 'targetFilename'. 
@@ -99,7 +98,7 @@ namespace DHI.DfsUtil
 @"
     -dfsudiff: Create difference file between two dfsu files:
 
-        DHI.DfsUtil -dfsudiff [referenceFilename] [compareFilename] [diffFilename]
+        DHI.Mesh.DfsUtil -dfsudiff [referenceFilename] [compareFilename] [diffFilename]
 
         Compares the compare-file to the reference-file and writes differences
         to the diff-file. In case the compare-file and reference-file is not
