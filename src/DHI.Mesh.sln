@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DHI.Mesh", "DHI.Mesh\DHI.Me
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DHI.Mesh.Test", "DHI.Mesh.Test\DHI.Mesh.Test.csproj", "{33B9B857-5C65-41D8-8033-70B72BC64513}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DHI.Mesh.DfsUtil", "DHI.DfsUtil\DHI.Mesh.DfsUtil.csproj", "{98A45F7E-D2C1-49A4-AFBD-7C327B32ADBF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DHI.Mesh.DfsUtil", "DHI.Mesh.DfsUtil\DHI.Mesh.DfsUtil.csproj", "{98A45F7E-D2C1-49A4-AFBD-7C327B32ADBF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
