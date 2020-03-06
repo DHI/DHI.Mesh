@@ -7,36 +7,79 @@ namespace DHI.Mesh.Test
   [TestFixture]
   public class MeshInterpolatorTests
   {
+    /// <summary>
+    /// Example of how to interpolate from element center values
+    /// to arbitrary target values, specified as (x,y) target points.
+    /// </summary>
+    [Test]
+    public void InterpolateElementValuesToXYExample()
+    {
+      // Source mesh
+      string triMesh = UnitTestHelper.TestDataDir + "odense_rough.mesh";
+      MeshFile meshFile = MeshFile.ReadMesh(triMesh);
+      MeshData mesh     = meshFile.ToMeshData();
+      mesh.BuildDerivedData();
+
+      // Element center values - usually read from dfsu file - here
+      // we just calculate some arbitrary linear function of (x,y)
+      double[] sourceValues = new double[meshFile.NumberOfElements];
+      for (int i = 0; i < meshFile.NumberOfElements; i++)
+      {
+        sourceValues[i] = 2*mesh.Elements[i].XCenter + mesh.Elements[i].YCenter;
+      }
+
+      // Mesh interpolator
+      MeshInterpolator2D interpolator = new MeshInterpolator2D(mesh);
+
+      // Coordinates to interpolate values to
+      interpolator.SetTargetSize(3);
+      interpolator.AddTarget(216600, 6159900);
+      interpolator.AddTarget(216700, 6159900);
+      interpolator.AddTarget(216700, 6160000);
+
+      // Array to interpolate values to
+      double[] targetValues = new double[3];
+
+      // Interpolate element values to target values
+      interpolator.InterpolateToTarget(sourceValues, targetValues);
+
+      // Test that values are really 2*x+y
+      Assert.AreEqual(2*216600 + 6159900, targetValues[0], 1e-6);
+      Assert.AreEqual(2*216700 + 6159900, targetValues[1], 1e-6);
+      Assert.AreEqual(2*216700 + 6160000, targetValues[2], 1e-6);
+    }
+
 
     /// <summary>
-    /// Test that interpolation to node values is second order accurate
-    /// by specifying a plane function for element center values,
+    /// Tests that interpolation from element center values to to node values is
+    /// second order accurate by specifying a plane function for element center values,
     /// and checking that values are exactly interpolated to nodes.
     /// </summary>
     [Test]
-    public void NodeInterpolationTest()
+    public void NodeInterpolationAccuracyTest()
     {
       System.Threading.Thread.CurrentThread.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
 
       string triMesh  = UnitTestHelper.TestDataDir + "odense_rough.mesh";
       string quadMesh = UnitTestHelper.TestDataDir + "odense_rough_quads.mesh";
-      NodeInterpolationTest(triMesh,  CircularValueTypes.Normal);
-      NodeInterpolationTest(quadMesh, CircularValueTypes.Normal);
-      NodeInterpolationTest(triMesh,  CircularValueTypes.Degrees180);
-      NodeInterpolationTest(quadMesh, CircularValueTypes.Degrees180);
-      NodeInterpolationTest(triMesh,  CircularValueTypes.Degrees360);
-      NodeInterpolationTest(quadMesh, CircularValueTypes.Degrees360);
-      NodeInterpolationTest(triMesh,  CircularValueTypes.RadiansPi);
-      NodeInterpolationTest(quadMesh, CircularValueTypes.RadiansPi);
-      NodeInterpolationTest(triMesh,  CircularValueTypes.Radians2Pi);
-      NodeInterpolationTest(quadMesh, CircularValueTypes.Radians2Pi);
+      NodeInterpolationAccuracyTest(triMesh,  CircularValueTypes.Normal);
+      NodeInterpolationAccuracyTest(quadMesh, CircularValueTypes.Normal);
+      NodeInterpolationAccuracyTest(triMesh,  CircularValueTypes.Degrees180);
+      NodeInterpolationAccuracyTest(quadMesh, CircularValueTypes.Degrees180);
+      NodeInterpolationAccuracyTest(triMesh,  CircularValueTypes.Degrees360);
+      NodeInterpolationAccuracyTest(quadMesh, CircularValueTypes.Degrees360);
+      NodeInterpolationAccuracyTest(triMesh,  CircularValueTypes.RadiansPi);
+      NodeInterpolationAccuracyTest(quadMesh, CircularValueTypes.RadiansPi);
+      NodeInterpolationAccuracyTest(triMesh,  CircularValueTypes.Radians2Pi);
+      NodeInterpolationAccuracyTest(quadMesh, CircularValueTypes.Radians2Pi);
     }
 
-    public void NodeInterpolationTest(string meshFileName, CircularValueTypes cvt = CircularValueTypes.Normal)
+    public void NodeInterpolationAccuracyTest(string meshFileName, CircularValueTypes cvt = CircularValueTypes.Normal)
     {
       // Source mesh
       MeshFile meshFile = MeshFile.ReadMesh(meshFileName);
       MeshData mesh     = meshFile.ToMeshData();
+      mesh.BuildDerivedData();
 
       // Allow for extrapolation on boundary nodes (disable clipping)
       MeshNodeInterpolation interpolation = new MeshNodeInterpolation(mesh) { AllowExtrapolation = true,};
@@ -88,30 +131,30 @@ namespace DHI.Mesh.Test
     }
 
     /// <summary>
-    /// Test that interpolation to point values is second order accurate
-    /// by specifying a plane function for element center values,
+    /// Tests that interpolation from element center values to point values is
+    /// second order accurate by specifying a plane function for element center values,
     /// and checking that values are exactly interpolated to those points.
     /// </summary>
     [Test]
-    public void InterpolationTest()
+    public void InterpolationAccuracyTest()
     {
       System.Threading.Thread.CurrentThread.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
 
       string triMesh = UnitTestHelper.TestDataDir + "odense_rough.mesh";
       string quadMesh = UnitTestHelper.TestDataDir + "odense_rough_quads.mesh";
-      InterpolationTest(triMesh, quadMesh, CircularValueTypes.Normal);
-      InterpolationTest(quadMesh, triMesh, CircularValueTypes.Normal);
-      InterpolationTest(triMesh, quadMesh, CircularValueTypes.Degrees180);
-      InterpolationTest(quadMesh, triMesh, CircularValueTypes.Degrees180);
-      InterpolationTest(triMesh, quadMesh, CircularValueTypes.Degrees360);
-      InterpolationTest(quadMesh, triMesh, CircularValueTypes.Degrees360);
-      InterpolationTest(triMesh, quadMesh, CircularValueTypes.RadiansPi);
-      InterpolationTest(quadMesh, triMesh, CircularValueTypes.RadiansPi);
-      InterpolationTest(triMesh, quadMesh, CircularValueTypes.Radians2Pi);
-      InterpolationTest(quadMesh, triMesh, CircularValueTypes.Radians2Pi);
+      InterpolationAccuracyTest(triMesh, quadMesh, CircularValueTypes.Normal);
+      InterpolationAccuracyTest(quadMesh, triMesh, CircularValueTypes.Normal);
+      InterpolationAccuracyTest(triMesh, quadMesh, CircularValueTypes.Degrees180);
+      InterpolationAccuracyTest(quadMesh, triMesh, CircularValueTypes.Degrees180);
+      InterpolationAccuracyTest(triMesh, quadMesh, CircularValueTypes.Degrees360);
+      InterpolationAccuracyTest(quadMesh, triMesh, CircularValueTypes.Degrees360);
+      InterpolationAccuracyTest(triMesh, quadMesh, CircularValueTypes.RadiansPi);
+      InterpolationAccuracyTest(quadMesh, triMesh, CircularValueTypes.RadiansPi);
+      InterpolationAccuracyTest(triMesh, quadMesh, CircularValueTypes.Radians2Pi);
+      InterpolationAccuracyTest(quadMesh, triMesh, CircularValueTypes.Radians2Pi);
     }
 
-    public void InterpolationTest(string sourceMeshFileName, string targetMeshFileName, CircularValueTypes cvt = CircularValueTypes.Normal)
+    public void InterpolationAccuracyTest(string sourceMeshFileName, string targetMeshFileName, CircularValueTypes cvt = CircularValueTypes.Normal)
     {
       // Source mesh
       MeshFile meshFile = MeshFile.ReadMesh(sourceMeshFileName);
