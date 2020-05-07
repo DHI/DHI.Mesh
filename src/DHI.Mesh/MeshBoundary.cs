@@ -6,7 +6,7 @@ using System.Text;
 namespace DHI.Mesh
 {
   /// <summary>
-  /// Boundary of a mesh having a specific boundary code
+  /// Boundary segments / boundary-faces of a mesh having a specific boundary code
   /// </summary>
   public class MeshBoundary
   {
