@@ -39,9 +39,10 @@ namespace DHI.Mesh
     public List<MeshElement> Elements { get; set; }
 
     /// <summary>
-    /// Faces that this node is part of. 
+    /// Faces that is connected to this node. 
     /// <para>
     /// This is a derived feature. It is initially null, but can be created by calling
+    /// <see cref="MeshData.BuildFaces"/> or 
     /// <see cref="MeshData.BuildDerivedData"/>.
     /// </para>
     /// </summary>

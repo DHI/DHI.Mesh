@@ -81,6 +81,9 @@
     <Compile Include="..\DHI.Mesh\MeshData.cs">
       <Link>MeshData.cs</Link>
     </Compile>
+    <Compile Include="..\DHI.Mesh\SMeshData.cs">
+      <Link>SMeshData.cs</Link>
+    </Compile>
     <Compile Include="..\DHI.Mesh\MeshElement.cs">
       <Link>MeshElement.cs</Link>
     </Compile>
@@ -110,6 +113,9 @@
     </Compile>
     <Compile Include="..\DHI.Mesh\MeshNodeInterpolation.cs">
       <Link>MeshNodeInterpolation.cs</Link>
+    </Compile>
+    <Compile Include="..\DHI.Mesh\SMeshNodeInterpolation.cs">
+      <Link>SMeshNodeInterpolation.cs</Link>
     </Compile>
     <Compile Include="..\DHI.Mesh\MeshSearcher.cs">
       <Link>MeshSearcher.cs</Link>

@@ -157,12 +157,57 @@ namespace DHI.Mesh
     }
 
     /// <summary>
+    /// Convert from 1-based connectivity structure to zero-based connectivity structure
+    /// </summary>
+    public static int[][] ToZeroBased(this int[][] connectivity1Based)
+    {
+      int[][] con0 = new int[connectivity1Based.Length][];
+      for (int i = 0; i < connectivity1Based.Length; i++)
+      {
+        int[] con1Nodes = connectivity1Based[i];
+        con0[i]   = new int[con1Nodes.Length];
+        for (int j = 0; j < con1Nodes.Length; j++)
+        {
+          con0[i][j] = con1Nodes[j]-1;
+        }
+      }
+      return con0;
+    }
+
+    /// <summary>
+    /// Convert from zero-based connectivity structure to 1-based connectivity structure
+    /// </summary>
+    public static int[][] ToOneBased(this int[][] connectivity0Based)
+    {
+      int[][] con1 = new int[connectivity0Based.Length][];
+      for (int i = 0; i < connectivity0Based.Length; i++)
+      {
+        int[] con0Nodes = connectivity0Based[i];
+        con1[i] = new int[con0Nodes.Length];
+        for (int j = 0; j < con0Nodes.Length; j++)
+        {
+          con1[i][j] = con0Nodes[j] + 1;
+        }
+      }
+      return con1;
+    }
+
+    /// <summary>
     /// Convert a <see cref="MeshFile"/> class into a <see cref="MeshData"/> class.
     /// </summary>
     public static MeshData ToMeshData(this MeshFile file)
     {
       return MeshData.CreateMesh(file.Projection, file.NodeIds, file.X, file.Y, file.Z, file.Code, file.ElementIds, file.ElementType, file.ElementTable, file.ZUnit);
     }
+
+    /// <summary>
+    /// Convert a <see cref="MeshFile"/> class into a <see cref="MeshData"/> class.
+    /// </summary>
+    public static SMeshData ToSMeshData(this MeshFile file)
+    {
+      return SMeshData.CreateMesh(file.Projection, file.NodeIds, file.X, file.Y, file.Z, file.Code, file.ElementIds, file.ElementType, file.ElementTable.ToZeroBased(), file.ZUnit);
+    }
+
 
     /// <summary>
     /// Convert a <see cref="MeshFile"/> class into a <see cref="MeshData"/> class.

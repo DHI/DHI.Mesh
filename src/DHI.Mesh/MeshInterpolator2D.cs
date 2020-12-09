@@ -118,9 +118,9 @@ namespace DHI.Mesh
 
     public void SetupNodeInterpolation()
     {
-      MeshNodeInterpolation interpFactory = new MeshNodeInterpolation(_mesh);
+      MeshNodeInterpolation interpFactory = new MeshNodeInterpolation();
       interpFactory.AllowExtrapolation = _allowExtrapolation;
-      interpFactory.Setup();
+      interpFactory.Setup(_mesh);
       _nodeInterpolator = interpFactory.NodeInterpolator;
       _nodeInterpolator.DeleteValue  = _deleteValue;
       _nodeInterpolator.CircularType = _circularType;

@@ -1,5 +1,6 @@
 ﻿
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace DHI.Mesh
@@ -35,7 +36,7 @@ namespace DHI.Mesh
     /// <summary>
     /// Evaluate its boundary code based on the code of the nodes.
     /// </summary>
-    internal void SetBoundaryCode()
+    internal void SetBoundaryCode(List<string> errors = null)
     {
       // If the RightElement exists, this face is an internal face
       if (RightElement != null)
@@ -47,13 +48,13 @@ namespace DHI.Mesh
       int fromCode = FromNode.Code;
       int toCode   = ToNode.Code;
 
-      // True if "invalid" boundary face, then set it as internal face.
-      bool internalFace = false;
+      // True if "invalid" boundary face, then set it as land face.
+      bool landFace = false;
 
       if (fromCode == 0)
       {
-        internalFace = true;
-        throw new Exception(string.Format(
+        landFace = true;
+        errors?.Add(string.Format(
           "Invalid mesh: Boundary face, from node {0} to node {1} is missing a boundary code on node {0}. " +
           "Hint: Modify boundary code for node {0}",
           FromNode.Index + 1, ToNode.Index + 1));
@@ -61,8 +62,8 @@ namespace DHI.Mesh
 
       if (toCode == 0)
       {
-        internalFace = true;
-        throw new Exception(string.Format(
+        landFace = true;
+        errors?.Add(string.Format(
           "Invalid mesh: Boundary face, from node {0} to node {1} is missing a boundary code on node {1}. " +
           "Hint: Modify boundary code for node {1}",
           FromNode.Index + 1, ToNode.Index + 1));
@@ -80,8 +81,10 @@ namespace DHI.Mesh
       else
         faceCode = toCode;
 
-      if (!internalFace)
+      if (!landFace)
         Code = faceCode;
+      else
+        Code = 1;
     }
 
   }

@@ -61,7 +61,7 @@ namespace DHI.Mesh
     /// <summary>
     /// Find element containing (x,y) coordinate. Returns null if no element found.
     /// <para>
-    /// If (x,y) is exacly on the boundary between two elements, one of them will be returned.
+    /// If (x,y) is exactly on the boundary between two elements, one of them will be returned.
     /// If (x,y) is matching exacly a node coordinate, one of the elements including the node will be returned.
     /// </para>
     /// </summary>

@@ -1,11 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 namespace DHI.Mesh
 {
 
   /// <summary>
   /// A mesh, consisting of triangles and quadrilaterals elements.
+  /// <para>
+  /// This MeshData class models the mesh using an objected oriented data model, easing access and navigation in the mesh.
+  /// If memory overhead becomes too big, the <see cref="SMeshData"/> uses memory optimized data structures.
+  /// </para>
   /// <para>
   /// A mesh consist of a number of nodes an elements. The node defines the coordinates.
   /// Each element is defined by a number of nodes. The number of nodes depends on the
@@ -116,18 +121,26 @@ namespace DHI.Mesh
     /// <summary>
     /// Build derived mesh data, the <see cref="MeshNode.Elements"/> and <see cref="MeshFace"/> lists.
     /// </summary>
-    public void BuildDerivedData()
+    public List<string> BuildDerivedData()
+    {
+      BuildNodeElements();
+      List<string> errors = BuildFaces();
+      return errors;
+    }
+
+    public void BuildNodeElements()
     {
       // Build up element list in nodes
       for (int i = 0; i < Nodes.Count; i++)
       {
         Nodes[i].Elements = new List<MeshElement>();
       }
+
       for (int ielmt = 0; ielmt < Elements.Count; ielmt++)
       {
-        MeshElement element = Elements[ielmt];
-        List<MeshNode> nodeInElmt = element.Nodes;
-        int   numNodesInElmt      = nodeInElmt.Count;
+        MeshElement    element        = Elements[ielmt];
+        List<MeshNode> nodeInElmt     = element.Nodes;
+        int            numNodesInElmt = nodeInElmt.Count;
 
         for (int j = 0; j < numNodesInElmt; j++)
         {
@@ -135,42 +148,73 @@ namespace DHI.Mesh
           meshNode.Elements.Add(element);
         }
       }
+    }
+
+    /// <summary>
+    /// Build up the list of <see cref="Faces"/>
+    /// </summary>
+    /// <param name="nodeFaces">Also build up <see cref="MeshNode.Faces"/></param>
+    /// <param name="elmtFaces">Also build up <see cref="MeshElement.Faces"/></param>
+    public List<string> BuildFaces(bool nodeFaces = false, bool elmtFaces = false)
+    {
+      List<string> errors = new List<string>();
 
       // Build up face lists
       Faces = new List<MeshFace>();
 
+      //System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
+      //watch.Start();
       // Preallocate list of face on all nodes - used in next loop
       for (int i = 0; i < Nodes.Count; i++)
         Nodes[i].Faces = new List<MeshFace>();
+      //watch.Stop();
+      //Console.Out.WriteLine("Prealloc nodeface " + watch.Elapsed.TotalSeconds);
+      //watch.Reset();
 
+      //watch.Start();
       // Create all faces.
       for (int ielmt = 0; ielmt < Elements.Count; ielmt++)
       {
         MeshElement element = Elements[ielmt];
-        element.Faces = new List<MeshFace>();
+        if (elmtFaces)
+          element.Faces = new List<MeshFace>();
         List<MeshNode> elmtNodes = element.Nodes;
         for (int j = 0; j < elmtNodes.Count; j++)
         {
           MeshNode fromNode = elmtNodes[j];
-          MeshNode toNode   = elmtNodes[(j + 1) % elmtNodes.Count];
+          MeshNode toNode = elmtNodes[(j + 1) % elmtNodes.Count];
           AddFace(element, fromNode, toNode);
         }
       }
+      //watch.Stop();
+      //Console.Out.WriteLine("Build faces       " + watch.Elapsed.TotalSeconds);
+      //watch.Reset();
 
       // Figure out boundary code
       for (int i = 0; i < Faces.Count; i++)
       {
         MeshFace face = Faces[i];
-        face.SetBoundaryCode();
+        face.SetBoundaryCode(errors);
       }
 
-      // Add face to the elements list of faces
-      for (int i = 0; i < Faces.Count; i++)
+      if (!nodeFaces)
       {
-        MeshFace face = Faces[i];
-        face.LeftElement.Faces.Add(face);
-        face.RightElement?.Faces.Add(face);
+        for (int i = 0; i < Nodes.Count; i++)
+          Nodes[i].Faces = null;
       }
+
+      if (elmtFaces)
+      {
+        // Add face to the elements list of faces
+        for (int i = 0; i < Faces.Count; i++)
+        {
+          MeshFace face = Faces[i];
+          face.LeftElement.Faces.Add(face);
+          face.RightElement?.Faces.Add(face);
+        }
+      }
+
+      return errors;
     }
 
     /// <summary>
@@ -196,9 +240,20 @@ namespace DHI.Mesh
       //                           "Try decrease node merge tolerance value",
       //                           fromNode.Index + 1, toNode.Index + 1));
       //}
-      
+
       // Try find "reverse face" going from from-node to to-node.
-      int reverseFaceIndex = toNodeFaces.FindIndex(mf => mf.ToNode == fromNode);
+      // The FindIndex with delegate is 10+ times slower than the tight loop below.
+      //int reverseFaceIndex = toNodeFaces.FindIndex(mf => mf.ToNode == fromNode);
+      int reverseFaceIndex = -1;
+      for (int i = 0; i < toNodeFaces.Count; i++)
+      {
+        if (toNodeFaces[i].ToNode == fromNode)
+        {
+          reverseFaceIndex = i;
+          break;
+        }
+      }
+
       if (reverseFaceIndex >= 0)
       {
         // Found reverse face, reuse it and add the elment as the RightElement
@@ -238,7 +293,18 @@ namespace DHI.Mesh
       List<MeshFace> toNodeFaces = nodeFaces[toNode.Index];
 
       // Try find "reverse face" going from from-node to to-node.
-      int reverseFaceIndex = toNodeFaces.FindIndex(mf => mf.ToNode == fromNode);
+      // The FindIndex with delegate is 10+ times slower than the tight loop below.
+      //int reverseFaceIndex = toNodeFaces.FindIndex(mf => mf.ToNode == fromNode);
+      int reverseFaceIndex = -1;
+      for (int i = 0; i < toNodeFaces.Count; i++)
+      {
+        if (toNodeFaces[i].ToNode == fromNode)
+        {
+          reverseFaceIndex = i;
+          break;
+        }
+      }
+
       if (reverseFaceIndex >= 0)
       {
         // Found reverse face, reuse it and add the elment as the RightElement

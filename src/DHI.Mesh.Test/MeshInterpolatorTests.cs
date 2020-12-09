@@ -82,8 +82,8 @@ namespace DHI.Mesh.Test
       mesh.BuildDerivedData();
 
       // Allow for extrapolation on boundary nodes (disable clipping)
-      MeshNodeInterpolation interpolation = new MeshNodeInterpolation(mesh) { AllowExtrapolation = true,};
-      interpolation.Setup();
+      MeshNodeInterpolation interpolation = new MeshNodeInterpolation() { AllowExtrapolation = true,};
+      interpolation.Setup(mesh);
       Interpolator nodeInterpolator = interpolation.NodeInterpolator;
       nodeInterpolator.CircularType = cvt;
 

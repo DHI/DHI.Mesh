@@ -15,15 +15,13 @@ namespace DHI.Mesh
   ///       89-1932 in Proc.AIAA 9th CFD Conference.
   /// </para>
   /// </summary>
-  public class MeshNodeInterpolation
+  public partial class MeshNodeInterpolation
   {
-    private MeshData     _mesh;
     private bool         _allowExtrapolation;
     private Interpolator _nodeInterpolator;
     
-    public MeshNodeInterpolation(MeshData mesh)
+    public MeshNodeInterpolation()
     {
-      _mesh = mesh;
     }
 
     /// <summary>
@@ -50,12 +48,12 @@ namespace DHI.Mesh
     /// <summary>
     /// Setup interpolation for all nodes in the mesh.
     /// </summary>
-    public void Setup()
+    public void Setup(MeshData mesh)
     {
-      var nodeInterpData = new Interpolator.InterPData[_mesh.Nodes.Count];
-      for (int i = 0; i < _mesh.Nodes.Count; i++)
+      var nodeInterpData = new Interpolator.InterPData[mesh.Nodes.Count];
+      for (int i = 0; i < mesh.Nodes.Count; i++)
       {
-        MeshNode node = _mesh.Nodes[i];
+        MeshNode node = mesh.Nodes[i];
         nodeInterpData[i] = SetupNodeInterpolation(node);
       }
 

@@ -21,10 +21,10 @@ namespace DHI.Mesh
         int[]    indices = interPData.Indices;
         double[] weights = interPData.Weights;
 
-        // For angular-type data, find reference value
-        double refValue = 0;
         if (_circularType != CircularValueTypes.Normal)
         {
+          // For angular-type data, find reference value
+          double refValue = 0;
           for (int j = 0; j < indices.Length; j++)
           {
             double sourceValue = sourceValues[indices[j]];
@@ -35,34 +35,47 @@ namespace DHI.Mesh
               break;
             }
           }
-        }
-
-        // Loop over all source elements connected to target
-        for (int j = 0; j < indices.Length; j++)
-        {
-          double sourceValue = sourceValues[indices[j]];
-
-          if (sourceValue != _deleteValue)
+          // Loop over all source elements connected to target
+          for (int j = 0; j < indices.Length; j++)
           {
-
-            // For angular type values, correct to match reference value
-            CircularValueHandler.ToReference(_circularType, ref sourceValue, refValue);
-
-            value  += sourceValue * weights[j];
-            weight += weights[j];
+            double sourceValue = sourceValues[indices[j]];
+            if (sourceValue != _deleteValue)
+            {
+              // For angular type values, correct to match reference value
+              CircularValueHandler.ToReference(_circularType, ref sourceValue, refValue);
+              value  += sourceValue * weights[j];
+              weight += weights[j];
+            }
+          }
+          if (weight == 0) // all element values were delete values
+            targetValues[i] = _deleteValue;
+          else
+          {
+            value /= weight;
+            // For angular type values, correct to match angular span.
+            CircularValueHandler.ToCircular(_circularType, ref value);
+            targetValues[i] = value;
           }
         }
-
-        if (weight == 0) // all element values were delete values
-          targetValues[i] = _deleteValue;
         else
         {
-          value /= weight;
-
-          // For angular type values, correct to match angular span.
-          CircularValueHandler.ToCircular(_circularType, ref value);
-
-          targetValues[i] = value;
+          // Loop over all source elements connected to target
+          for (int j = 0; j < indices.Length; j++)
+          {
+            double sourceValue = sourceValues[indices[j]];
+            if (sourceValue != _deleteValue)
+            {
+              value  += sourceValue * weights[j];
+              weight += weights[j];
+            }
+          }
+          if (weight == 0) // all element values were delete values
+            targetValues[i] = _deleteValue;
+          else
+          {
+            value /= weight;
+            targetValues[i] = value;
+          }
         }
       }
     }
