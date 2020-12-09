@@ -124,7 +124,7 @@ namespace DHI.Mesh
     public List<string> BuildDerivedData()
     {
       BuildNodeElements();
-      List<string> errors = BuildFaces();
+      List<string> errors = BuildFaces(true, true);
       return errors;
     }
 
