@@ -118,13 +118,16 @@ namespace DHI.Mesh
 
     public void SetupNodeInterpolation()
     {
-      MeshNodeInterpolation interpFactory = new MeshNodeInterpolation();
-      interpFactory.AllowExtrapolation = _allowExtrapolation;
-      interpFactory.Setup(_mesh);
-      _nodeInterpolator = interpFactory.NodeInterpolator;
-      _nodeInterpolator.DeleteValue  = _deleteValue;
-      _nodeInterpolator.CircularType = _circularType;
-      _nodeValues       = new double[_mesh.Nodes.Count];
+      if (_nodeInterpolator == null)
+      {
+        MeshNodeInterpolation interpFactory = new MeshNodeInterpolation();
+        interpFactory.AllowExtrapolation = _allowExtrapolation;
+        interpFactory.Setup(_mesh);
+        _nodeInterpolator              = interpFactory.NodeInterpolator;
+        _nodeInterpolator.DeleteValue  = _deleteValue;
+        _nodeInterpolator.CircularType = _circularType;
+        _nodeValues                    = new double[_mesh.Nodes.Count];
+      }
     }
 
     /// <summary>

@@ -151,8 +151,8 @@ namespace DHI.Mesh.DfsUtil
       watch.Start();
 
       // Build up mesh structures for interpolation
-      MeshData sourceMesh = Create(refdfsu);
-      MeshData targetMesh = Create(diffDfsu);
+      MeshData sourceMesh = Create(comdfsu);
+      MeshData targetMesh = Create(refdfsu);
       sourceMesh.BuildDerivedData();
 
       watch.Stop();

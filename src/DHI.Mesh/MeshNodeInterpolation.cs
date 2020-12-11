@@ -74,33 +74,16 @@ namespace DHI.Mesh
         Weights = new double[node.Elements.Count],
       };
 
-      double Ixx      = 0;
-      double Iyy      = 0;
-      double Ixy      = 0;
-      double Rx       = 0;
-      double Ry       = 0;
       double omegaTot = 0;
 
-      for (int i = 0; i < node.Elements.Count; i++)
+      if (node.Elements.Count >= 3)
       {
-        MeshElement element = node.Elements[i];
-        double      dx      = element.XCenter - node.X;
-        double      dy      = element.YCenter - node.Y;
 
-        Ixx += dx * dx;
-        Iyy += dy * dy;
-        Ixy += dx * dy;
-        Rx  += dx;
-        Ry  += dy;
-
-        interpData.Indices[i] = element.Index;
-      }
-
-      double lambda = Ixx * Iyy - Ixy * Ixy;
-
-      if (lambda > 1e-10 * (Ixx * Iyy))
-      {
-        // Standard case - Pseudo Laplacian
+        double Ixx      = 0;
+        double Iyy      = 0;
+        double Ixy      = 0;
+        double Rx       = 0;
+        double Ry       = 0;
 
         for (int i = 0; i < node.Elements.Count; i++)
         {
@@ -108,24 +91,46 @@ namespace DHI.Mesh
           double      dx      = element.XCenter - node.X;
           double      dy      = element.YCenter - node.Y;
 
-          double lambda_x = (Ixy * Ry - Iyy * Rx) / lambda;
-          double lambda_y = (Ixy * Rx - Ixx * Ry) / lambda;
+          Ixx += dx * dx;
+          Iyy += dy * dy;
+          Ixy += dx * dy;
+          Rx  += dx;
+          Ry  += dy;
 
-          double omega = 1.0 + lambda_x * dx + lambda_y * dy;
-          if (!_allowExtrapolation)
+          interpData.Indices[i] = element.Index;
+        }
+
+        double lambda = Ixx * Iyy - Ixy * Ixy;
+
+        if (lambda > 1e-10 * (Ixx * Iyy))
+        {
+          // Standard case - Pseudo Laplacian
+
+          for (int i = 0; i < node.Elements.Count; i++)
           {
-            if (omega < 0)
-              omega = 0;
-            else if (omega > 2)
-              omega = 2;
-          }
+            MeshElement element = node.Elements[i];
+            double      dx      = element.XCenter - node.X;
+            double      dy      = element.YCenter - node.Y;
 
-          interpData.Weights[i] =  omega;
-          omegaTot              += omega;
+            double lambda_x = (Ixy * Ry - Iyy * Rx) / lambda;
+            double lambda_y = (Ixy * Rx - Ixx * Ry) / lambda;
+
+            double omega = 1.0 + lambda_x * dx + lambda_y * dy;
+            if (!_allowExtrapolation)
+            {
+              if (omega < 0)
+                omega = 0;
+              else if (omega > 2)
+                omega = 2;
+            }
+
+            interpData.Weights[i] =  omega;
+            omegaTot              += omega;
+          }
         }
       }
 
-      if (omegaTot <= 0)
+      if (omegaTot <= 1e-10)
       {
         // We did not succeed using pseudo laplace procedure, 
         // use inverse distance instead
