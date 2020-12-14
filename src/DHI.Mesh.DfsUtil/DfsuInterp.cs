@@ -98,12 +98,18 @@ namespace DHI.Mesh.DfsUtil
 @"
     -dfsudiff: Create difference file between two dfsu files:
 
-        DHI.Mesh.DfsUtil -dfsudiff [referenceFilename] [compareFilename] [diffFilename]
+        DHI.Mesh.DfsUtil -dfsudiff [referenceFilename] [compareFilename] [diffFilename] <options>
 
         Compares the compare-file to the reference-file and writes differences
         to the diff-file. In case the compare-file and reference-file is not
         identical, the compare-data is interpolated to the reference-file mesh
         and then compared.
+
+        Options:
+            -deletevaluenodiff
+                In case of either reference or compare file having delete value
+                the result is a delete value. Default (not specified) is to treat
+                such a delete value as zero.
 ";
 
     /// <summary>
@@ -116,7 +122,8 @@ namespace DHI.Mesh.DfsUtil
     /// <param name="referenceFilename">Reference data for comparison</param>
     /// <param name="compareFilename">Comparison data</param>
     /// <param name="diffFilename">File to store difference data to</param>
-    public static void DfsuDiff(string referenceFilename, string compareFilename, string diffFilename)
+    /// <param name="deleteValueDiff">If set to true, comparing delete value to non-delete value will return the non-delete value</param>
+    public static void DfsuDiff(string referenceFilename, string compareFilename, string diffFilename, bool deleteValueDiff = true)
     {
       System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
       watch.Start();
@@ -125,7 +132,8 @@ namespace DHI.Mesh.DfsUtil
       DfsuFile refdfsu = DfsFileFactory.DfsuFileOpen(referenceFilename);
       DfsuFile comdfsu = DfsFileFactory.DfsuFileOpen(compareFilename);
 
-      float deleteValueFloat = refdfsu.DeleteValueFloat;
+      float refDeleteValueFloat = refdfsu.DeleteValueFloat;
+      float comDeleteValueFloat = comdfsu.DeleteValueFloat;
 
       // Create diff file, matching reference file.
       DfsuBuilder builder = DfsuBuilder.Create(DfsuFileType.Dfsu2D);
@@ -151,30 +159,39 @@ namespace DHI.Mesh.DfsUtil
       watch.Start();
 
       // Build up mesh structures for interpolation
-      MeshData sourceMesh = Create(comdfsu);
-      MeshData targetMesh = Create(refdfsu);
-      sourceMesh.BuildDerivedData();
+      MeshData refMesh = Create(refdfsu);
+      MeshData comMesh = Create(comdfsu);
+
+      bool meshEquals = refMesh.EqualsGeometry(comMesh);
+      if (!meshEquals)
+        comMesh.BuildDerivedData();
 
       watch.Stop();
       Console.Out.WriteLine("Build mesh  : " + watch.Elapsed.TotalSeconds);
       watch.Reset();
-      watch.Start();
 
-      // Build up interpolatin structures
-      MeshInterpolator2D interpolator = new MeshInterpolator2D(sourceMesh)
+      MeshInterpolator2D interpolator = null;
+      float[]            targetData = null;
+
+      // Do not interpolate if meshes equals
+      if (!meshEquals)
       {
-        DeleteValue = refdfsu.DeleteValueFloat,
-        DeleteValueFloat = refdfsu.DeleteValueFloat,
-      };
-      interpolator.SetTarget(targetMesh);
+        watch.Start();
+        // Build up interpolatin structures
+        interpolator = new MeshInterpolator2D(comMesh)
+        {
+          DeleteValue      = comdfsu.DeleteValueFloat,
+          DeleteValueFloat = comdfsu.DeleteValueFloat,
+        };
+        interpolator.SetTarget(refMesh);
+        // Temporary, interpolated compare-data
+        targetData = new float[diffDfsu.NumberOfElements];
+        watch.Stop();
+        Console.Out.WriteLine("Interpolator: " + watch.Elapsed.TotalSeconds);
+        watch.Reset();
+      }
 
-      watch.Stop();
-      Console.Out.WriteLine("Interpolator: " + watch.Elapsed.TotalSeconds);
-      watch.Reset();
       watch.Start();
-
-      // Temporary, interpolated compare-data
-      float[] targetData = new float[diffDfsu.NumberOfElements];
 
       // Loop over all time steps
       IDfsItemData<float> refData;
@@ -183,16 +200,38 @@ namespace DHI.Mesh.DfsUtil
              null != (comData = comdfsu.ReadItemTimeStepNext() as IDfsItemData<float>))
       {
 
-        interpolator.InterpolateToTarget(comData.Data, targetData);
+        if (interpolator != null)
+          interpolator.InterpolateToTarget(comData.Data, targetData);
+        else
+        {
+          targetData = comData.Data;
+        }
 
         for (int i = 0; i < targetData.Length; i++)
         {
-          if (refData.Data[i] != deleteValueFloat && 
-              targetData[i]   != deleteValueFloat)
+          // ReSharper disable CompareOfFloatsByEqualityOperator
+          if      (refData.Data[i] != refDeleteValueFloat && 
+                   targetData[i]   != comDeleteValueFloat)
             targetData[i] = refData.Data[i] - targetData[i];
+
+          else if (refData.Data[i] == refDeleteValueFloat &&
+                   targetData[i]   == comDeleteValueFloat)
+            targetData[i] = refDeleteValueFloat;
+
+          else if (deleteValueDiff)
+          {
+            if (refData.Data[i] != refDeleteValueFloat)
+              targetData[i] = refData.Data[i];
+            else // (targetData[i] != comDeleteValueFloat)
+              targetData[i] = - targetData[i];
+          }
           else
-            targetData[i] = deleteValueFloat;
+          {
+            targetData[i] = refDeleteValueFloat;
+          }
+          // ReSharper restore CompareOfFloatsByEqualityOperator
         }
+
         diffDfsu.WriteItemTimeStepNext(refData.Time, targetData);
       }
       watch.Stop();

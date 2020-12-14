@@ -3,3 +3,5 @@ _ReSharper.Caches
 /src/packages
 bin
 obj
+*csproj.user
+*DotSettings.user

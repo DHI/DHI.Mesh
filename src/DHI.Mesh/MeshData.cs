@@ -325,5 +325,48 @@ namespace DHI.Mesh
         //toNodeFaces.Add(meshFace);
       }
     }
+
+    /// <summary>
+    /// Determines whether the specified mesh geometry is equal to the current mesh's geometry.
+    /// The order of the nodes and elements in the mesh must equal.
+    /// <para>
+    /// This only checks the geometry, i.e. node coordinates, node boundary codes and element connectivity.
+    /// The Id's in the mesh may differ. 
+    /// </para>
+    /// </summary>
+    /// <param name="other"></param>
+    /// <param name="tolerance"></param>
+    public bool EqualsGeometry(MeshData other, double tolerance = 1e-3)
+    {
+      if (this.Nodes.Count != other.Nodes.Count ||
+          this.Elements.Count != other.Elements.Count)
+        return false;
+
+      for (int i = 0; i < this.Nodes.Count; i++)
+      {
+        MeshNode nt = this.Nodes[i];
+        MeshNode no = other.Nodes[i];
+        if (Math.Abs(nt.X - no.X) > tolerance ||
+            Math.Abs(nt.Y - no.Y) > tolerance ||
+            nt.Code != no.Code)
+          return false;
+      }
+
+      for (int i = 0; i < this.Elements.Count; i++)
+      {
+        MeshElement et = this.Elements[i];
+        MeshElement eo = other.Elements[i];
+        if (et.Nodes.Count != eo.Nodes.Count)
+          return false;
+        for (int j = 0; j < et.Nodes.Count; j++)
+        {
+          if (et.Nodes[j].Index != eo.Nodes[j].Index)
+            return false;
+        }
+      }
+      return true;
+    }
   }
+
+
 }
