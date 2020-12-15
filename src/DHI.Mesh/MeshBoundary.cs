@@ -20,7 +20,7 @@ namespace DHI.Mesh
     public List<List<MeshFace>> Segments = new List<List<MeshFace>>();
   }
 
-  public static class MeshBoundaryExtensions
+  public static partial class MeshBoundaryExtensions
   {
     /// <summary>
     /// Return all boundary faces. Unsorted

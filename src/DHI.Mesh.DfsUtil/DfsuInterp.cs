@@ -67,6 +67,7 @@ namespace DHI.Mesh.DfsUtil
       {
         DeleteValue = sourceDfsu.DeleteValueFloat,
         DeleteValueFloat = sourceDfsu.DeleteValueFloat,
+        //AllowExtrapolation = true,
       };
       interpolator.SetTarget(targetMesh);
 
@@ -159,15 +160,18 @@ namespace DHI.Mesh.DfsUtil
       watch.Start();
 
       // Build up mesh structures for interpolation
-      MeshData refMesh = Create(refdfsu);
-      MeshData comMesh = Create(comdfsu);
+      SMeshData refMesh = SCreate(refdfsu);
+      SMeshData comMesh = SCreate(comdfsu);
+      watch.Stop();
+      Console.Out.WriteLine("Create mesh  : " + watch.Elapsed.TotalSeconds);
+      watch.Reset();
 
+      watch.Start();
       bool meshEquals = refMesh.EqualsGeometry(comMesh);
       if (!meshEquals)
         comMesh.BuildDerivedData();
-
       watch.Stop();
-      Console.Out.WriteLine("Build mesh  : " + watch.Elapsed.TotalSeconds);
+      Console.Out.WriteLine("Build Deriv : " + watch.Elapsed.TotalSeconds);
       watch.Reset();
 
       MeshInterpolator2D interpolator = null;
@@ -182,6 +186,7 @@ namespace DHI.Mesh.DfsUtil
         {
           DeleteValue      = comdfsu.DeleteValueFloat,
           DeleteValueFloat = comdfsu.DeleteValueFloat,
+          //AllowExtrapolation = true,
         };
         interpolator.SetTarget(refMesh);
         // Temporary, interpolated compare-data
@@ -283,6 +288,14 @@ namespace DHI.Mesh.DfsUtil
       return MeshData.CreateMesh(mesh.Projection, mesh.NodeIds, mesh.X, mesh.Y, mesh.Z, mesh.Code, mesh.ElementIds, mesh.ElementType, mesh.ElementTable);
     }
 
+    public static SMeshData SCreate(DfsuFile dfsu)
+    {
+      return SMeshData.CreateMesh(dfsu.Projection.WKTString, dfsu.NodeIds, dfsu.X, dfsu.Y, dfsu.Z.ToDoubleArray(), dfsu.Code, dfsu.ElementIds, dfsu.ElementType, dfsu.ElementTable.ToZeroBased());
+    }
+    public static SMeshData SCreate(MeshFile mesh)
+    {
+      return SMeshData.CreateMesh(mesh.Projection, mesh.NodeIds, mesh.X, mesh.Y, mesh.Z, mesh.Code, mesh.ElementIds, mesh.ElementType, mesh.ElementTable.ToZeroBased());
+    }
 
   }
 }

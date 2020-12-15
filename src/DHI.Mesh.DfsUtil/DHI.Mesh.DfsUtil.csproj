@@ -78,6 +78,9 @@
     <Compile Include="..\DHI.Mesh\MeshBoundary.cs">
       <Link>MeshBoundary.cs</Link>
     </Compile>
+    <Compile Include="..\DHI.Mesh\SMeshBoundary.cs">
+      <Link>SMeshBoundary.cs</Link>
+    </Compile>
     <Compile Include="..\DHI.Mesh\MeshData.cs">
       <Link>MeshData.cs</Link>
     </Compile>
@@ -93,11 +96,17 @@
     <Compile Include="..\DHI.Mesh\MeshFace.cs">
       <Link>MeshFace.cs</Link>
     </Compile>
+    <Compile Include="..\DHI.Mesh\SMeshFace.cs">
+      <Link>SMeshFace.cs</Link>
+    </Compile>
     <Compile Include="..\DHI.Mesh\MeshFile.cs">
       <Link>MeshFile.cs</Link>
     </Compile>
     <Compile Include="..\DHI.Mesh\MeshFileBuilder.cs">
       <Link>MeshFileBuilder.cs</Link>
+    </Compile>
+    <Compile Include="..\DHI.Mesh\SMeshInterpolator2D.cs">
+      <Link>SMeshInterpolator2D.cs</Link>
     </Compile>
     <Compile Include="..\DHI.Mesh\MeshInterpolator2D.cs">
       <Link>MeshInterpolator2D.cs</Link>
@@ -119,6 +128,9 @@
     </Compile>
     <Compile Include="..\DHI.Mesh\MeshSearcher.cs">
       <Link>MeshSearcher.cs</Link>
+    </Compile>
+    <Compile Include="..\DHI.Mesh\SMeshSearcher.cs">
+      <Link>SMeshSearcher.cs</Link>
     </Compile>
     <Compile Include="..\DHI.Mesh\MeshUnit.cs">
       <Link>MeshUnit.cs</Link>

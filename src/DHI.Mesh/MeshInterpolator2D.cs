@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace DHI.Mesh
 {
@@ -23,7 +18,7 @@ namespace DHI.Mesh
     /// </summary>
     struct InterPData
     {
-      /// <summary> Source element </summary>
+      /// <summary> Source element. -1 if not available in source data </summary>
       public int Element1Index;
       /// <summary> Other element, on the other side of the face. For boundary faces, source element value is used. </summary>
       public int Element2Index;
@@ -67,7 +62,6 @@ namespace DHI.Mesh
     public MeshInterpolator2D(MeshData sourceMesh)
     {
       _mesh = sourceMesh;
-      SetupNodeInterpolation();
     }
 
     /// <summary> Delete/undefined value </summary>
@@ -122,11 +116,19 @@ namespace DHI.Mesh
       {
         MeshNodeInterpolation interpFactory = new MeshNodeInterpolation();
         interpFactory.AllowExtrapolation = _allowExtrapolation;
-        interpFactory.Setup(_mesh);
+        if (_mesh != null)
+        {
+          interpFactory.Setup(_mesh);
+          _nodeValues = new double[_mesh.Nodes.Count];
+        }
+        else
+        {
+          interpFactory.Setup(_smesh);
+          _nodeValues = new double[_smesh.NumberOfNodes];
+        }
         _nodeInterpolator              = interpFactory.NodeInterpolator;
         _nodeInterpolator.DeleteValue  = _deleteValue;
         _nodeInterpolator.CircularType = _circularType;
-        _nodeValues                    = new double[_mesh.Nodes.Count];
       }
     }
 
@@ -135,11 +137,11 @@ namespace DHI.Mesh
     /// </summary>
     public void SetTarget(MeshData targetMesh)
     {
-      SetTargetSize(targetMesh.Elements.Count);
+      SetTargetSize(targetMesh.NumberOfElements);
       for (int i = 0; i < targetMesh.Elements.Count; i++)
       {
-        MeshElement targetElement = targetMesh.Elements[i];
-        AddTarget(targetElement.XCenter, targetElement.YCenter);
+        MeshElement targetMeshElement = targetMesh.Elements[i];
+        AddTarget(targetMeshElement.XCenter, targetMeshElement.YCenter);
       }
     }
 
@@ -162,6 +164,13 @@ namespace DHI.Mesh
     {
       if (_targets == null)
         _targets = new List<InterPData>();
+
+      if (_mesh == null)
+      {
+        AddSTarget(x, y);
+        return;
+      }
+
       if (_searcher == null)
       {
         _searcher = new MeshSearcher(_mesh);
@@ -201,6 +210,13 @@ namespace DHI.Mesh
             leftNode  = elementFace.FromNode;
           }
 
+          double elementXCenter = element.XCenter;
+          double elementYCenter = element.YCenter;
+          double rightNodeX     = rightNode.X;
+          double rightNodeY     = rightNode.Y;
+          double leftNodeX      = leftNode.X;
+          double leftNodeY      = leftNode.Y;
+
           // Find also the element on the other side of the face
           double otherElementX, otherElementY;
           MeshElement otherElement = elementFace.OtherElement(element);
@@ -213,17 +229,17 @@ namespace DHI.Mesh
           else
           {
             // No other element - boundary face, use center of face.
-            otherElementX = 0.5 * (rightNode.X + leftNode.X);
-            otherElementY = 0.5 * (rightNode.Y + leftNode.Y);
+            otherElementX = 0.5 * (rightNodeX + leftNodeX);
+            otherElementY = 0.5 * (rightNodeY + leftNodeY);
             // Use "itself" as element-2
             interpData.Element2Index = element.Index;
           }
 
 
           // Check if point is on the right side of the line between element and other-element
-          if (MeshExtensions.IsPointInsideLines(x, y, element.XCenter, element.YCenter, rightNode.X, rightNode.Y, otherElementX, otherElementY))
+          if (MeshExtensions.IsPointInsideLines(x, y, elementXCenter, elementYCenter, rightNodeX, rightNodeY, otherElementX, otherElementY))
           {
-            (double w1, double w2, double w3) = MeshExtensions.InterpolationWeights(x, y, element.XCenter, element.YCenter, rightNode.X, rightNode.Y, otherElementX, otherElementY);
+            (double w1, double w2, double w3) = MeshExtensions.InterpolationWeights(x, y, elementXCenter, elementYCenter, rightNodeX, rightNodeY, otherElementX, otherElementY);
             interpData.NodeIndex = rightNode.Index;
             interpData.Element1Weight = w1;
             interpData.NodeWeight     = w2;
@@ -232,13 +248,13 @@ namespace DHI.Mesh
             break;
           }
           // Check if point is on the left side of the line between element and other-element
-          if (MeshExtensions.IsPointInsideLines(x, y, element.XCenter, element.YCenter, otherElementX, otherElementY, leftNode.X, leftNode.Y))
+          if (MeshExtensions.IsPointInsideLines(x, y, elementXCenter, elementYCenter, otherElementX, otherElementY, leftNodeX, leftNodeY))
           {
-            (double w1, double w2, double w3) = MeshExtensions.InterpolationWeights(x, y, element.XCenter, element.YCenter, otherElementX, otherElementY, leftNode.X, leftNode.Y);
+            (double w1, double w2, double w3) = MeshExtensions.InterpolationWeights(x, y, elementXCenter, elementYCenter, otherElementX, otherElementY, leftNodeX, leftNodeY);
             interpData.NodeIndex = leftNode.Index;
             interpData.Element1Weight = w1;
             interpData.Element2Weight = w2;
-            interpData.NodeWeight     = w3;
+            interpData.NodeWeight = w3;
             found = true;
             break;
           }

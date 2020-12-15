@@ -14,12 +14,32 @@ namespace DHI.Mesh
     }
 
     /// <summary>
+    /// Returns true if the face is a boundary face.
+    /// </summary>
+    public static bool IsBoundaryFace(this SMeshFace face)
+    {
+      return face.RightElement < 0;
+    }
+
+    /// <summary>
     /// Returns true if mesh element is a quadrilateral element
     /// </summary>
     public static bool IsQuadrilateral(this MeshElement element)
     {
       // TODO: Should probably check on type?
       int nodesCount = element.Nodes.Count;
+      if (nodesCount == 4 || nodesCount == 8)
+        return true;
+      return false;
+    }
+
+    /// <summary>
+    /// Returns true if mesh element is a quadrilateral element
+    /// </summary>
+    public static bool IsQuadrilateral(this SMeshData mesh, int element)
+    {
+      // TODO: Should probably check on type?
+      int nodesCount = mesh.ElementTable[element].Length;
       if (nodesCount == 4 || nodesCount == 8)
         return true;
       return false;
@@ -53,6 +73,22 @@ namespace DHI.Mesh
     }
 
     /// <summary>
+    /// Get the other element of a <see cref="MeshFace"/>, when
+    /// looking from <paramref name="element"/>.
+    /// <para>
+    /// For boundary faces, null is returned.
+    /// </para>
+    /// </summary>
+    public static int OtherElement(this SMeshFace face, int element)
+    {
+      if (face.LeftElement == element)
+        return face.RightElement;
+      if (face.RightElement == element)
+        return face.LeftElement;
+      throw new Exception("element is not part of face");
+    }
+
+    /// <summary>
     /// Returns true if coordinate (x,y) is inside element
     /// </summary>
     public static bool Includes(this MeshElement element, double x, double y)
@@ -72,6 +108,29 @@ namespace DHI.Mesh
          LeftOf(x, y, elementNodes[1], elementNodes[2]) >= 0 &&
          LeftOf(x, y, elementNodes[2], elementNodes[3]) >= 0 &&
          LeftOf(x, y, elementNodes[3], elementNodes[0]) >= 0);
+
+    }
+
+    /// <summary>
+    /// Returns true if coordinate (x,y) is inside element
+    /// </summary>
+    public static bool Includes(this SMeshData mesh, int element, double x, double y)
+    {
+      bool isQuad = mesh.IsQuadrilateral(element);
+
+      int[] nodes = mesh.ElementTable[element];
+      if (!isQuad)
+      {
+        return
+          (LeftOf(x, y, mesh.X[nodes[0]], mesh.Y[nodes[0]], mesh.X[nodes[1]], mesh.Y[nodes[1]] ) >= 0 &&
+           LeftOf(x, y, mesh.X[nodes[1]], mesh.Y[nodes[1]], mesh.X[nodes[2]], mesh.Y[nodes[2]] ) >= 0 &&
+           LeftOf(x, y, mesh.X[nodes[2]], mesh.Y[nodes[2]], mesh.X[nodes[0]], mesh.Y[nodes[0]] ) >= 0);
+      }
+      return
+        (LeftOf(x, y, mesh.X[nodes[0]], mesh.Y[nodes[0]], mesh.X[nodes[1]], mesh.Y[nodes[1]]) >= 0 &&
+         LeftOf(x, y, mesh.X[nodes[1]], mesh.Y[nodes[1]], mesh.X[nodes[2]], mesh.Y[nodes[2]]) >= 0 &&
+         LeftOf(x, y, mesh.X[nodes[2]], mesh.Y[nodes[2]], mesh.X[nodes[3]], mesh.Y[nodes[3]]) >= 0 &&
+         LeftOf(x, y, mesh.X[nodes[3]], mesh.Y[nodes[3]], mesh.X[nodes[0]], mesh.Y[nodes[0]]) >= 0);
 
     }
 
@@ -267,6 +326,20 @@ namespace DHI.Mesh
       meshData.ToMeshFile().Write(filename);
     }
 
+    public static void ReportAndRestart(this System.Diagnostics.Stopwatch timer, string txt)
+    {
+      timer.Stop();
+      Console.Out.WriteLine("{0}: {1}", txt, timer.Elapsed.TotalSeconds);
+      timer.Reset();
+      timer.Start();
+    }
+
+    public static void Report(this System.Diagnostics.Stopwatch timer, string txt)
+    {
+      timer.Stop();
+      Console.Out.WriteLine("{0}: {1}", txt, timer.Elapsed.TotalSeconds);
+      timer.Reset();
+    }
 
   }
 }

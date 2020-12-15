@@ -248,6 +248,35 @@ namespace DHI.Mesh
     }
 
     /// <summary>
+    /// Element faces.
+    /// <para>
+    /// This is a derived feature. It is initially null, but can be created by calling
+    /// <see cref="BuildFaces"/> or 
+    /// <see cref="BuildDerivedData"/>.
+    /// </para>
+    /// </summary>
+    public List<SMeshFace> Faces { get; private set; }
+
+    /// <summary>
+    /// Faces that is connected to each node. 
+    /// <para>
+    /// This is a derived feature. It is initially null, but can be created by calling
+    /// <see cref="BuildFaces"/> or 
+    /// <see cref="BuildDerivedData"/>.
+    /// </para>
+    /// </summary>
+    public List<int>[] NodesFaces { get; private set; }
+    /// <summary>
+    /// Faces (boundary of element) that each element is defined by.
+    /// <para>
+    /// This is a derived feature. It is initially null, but can be created by calling
+    /// <see cref="BuildFaces"/> or 
+    /// <see cref="BuildDerivedData"/>.
+    /// </para>
+    /// </summary>
+    public List<int>[] ElementsFaces { get; private set; }
+
+    /// <summary>
     /// Create mesh from arrays. 
     /// </summary>
     public static SMeshData CreateMesh(string projection, int[] nodeIds, double[] x, double[] y, double[] z, int[] code, int[] elementIds, int[] elementTypes, int[][] connectivity, MeshUnit zUnit = MeshUnit.Meter)
@@ -272,16 +301,17 @@ namespace DHI.Mesh
     {
       CalcElementCenters();
       BuildNodeElements();
-      List<string> errors = BuildFaces();
+      List<string> errors = BuildFaces(true, true);
       return errors;
     }
 
     public void CalcElementCenters()
     {
-      _elmtXCenter = new double[NumberOfElements];
-      _elmtYCenter = new double[NumberOfElements];
-      _elmtZCenter = new double[NumberOfElements];
-      for (int ielmt = 0; ielmt < _elementIds.Length; ielmt++)
+      int numberOfElements = NumberOfElements;
+      _elmtXCenter = new double[numberOfElements];
+      _elmtYCenter = new double[numberOfElements];
+      _elmtZCenter = new double[numberOfElements];
+      for (int ielmt = 0; ielmt < numberOfElements; ielmt++)
       {
         int[] nodeInElmt     = _connectivity[ielmt];
         int   numNodesInElmt = nodeInElmt.Length;
@@ -307,15 +337,17 @@ namespace DHI.Mesh
 
     public void BuildNodeElements()
     {
-      _nodesElmts = new List<int>[_nodeIds.Length];
+      int numberOfNodes    = NumberOfNodes;
+      int numberOfElements = NumberOfElements;
+      _nodesElmts = new List<int>[numberOfNodes];
 
       // Build up element list in nodes
-      for (int i = 0; i < _nodeIds.Length; i++)
+      for (int i = 0; i < numberOfNodes; i++)
       {
         _nodesElmts[i] = new List<int>();
       }
 
-      for (int ielmt = 0; ielmt < _elementIds.Length; ielmt++)
+      for (int ielmt = 0; ielmt < numberOfElements; ielmt++)
       {
         int[]     elmtNodes     = _connectivity[ielmt];
         int       numNodesInElmt = elmtNodes.Length;
@@ -327,9 +359,208 @@ namespace DHI.Mesh
         }
       }
     }
+
+
     public List<string> BuildFaces(bool nodeFaces = false, bool elmtFaces = false, bool newImp = false)
     {
-      throw new NotImplementedException();
+      List<string> errors = new List<string>();
+
+      int numberOfNodes    = NumberOfNodes;
+      int numberOfElements = NumberOfElements;
+
+      // Build up face lists
+      Faces = new List<SMeshFace>();
+
+      //System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
+      //watch.Start();
+      // Preallocate list of face on all nodes - used in next loop
+      NodesFaces = new List<int>[numberOfNodes];
+      for (int i = 0; i < numberOfNodes; i++)
+        NodesFaces[i] = new List<int>();
+      //watch.Stop();
+      //Console.Out.WriteLine("Prealloc nodeface " + watch.Elapsed.TotalSeconds);
+      //watch.Reset();
+
+      //watch.Start();
+      // Create all faces.
+      if (elmtFaces)
+        ElementsFaces = new List<int>[numberOfElements];
+      for (int ielmt = 0; ielmt < numberOfElements; ielmt++)
+      {
+        int element = ielmt;
+        if (elmtFaces)
+          ElementsFaces[ielmt] = new List<int>();
+        int[] elmtNodes = _connectivity[element];
+        for (int j = 0; j < elmtNodes.Length; j++)
+        {
+          int fromNode = elmtNodes[j];
+          int toNode   = elmtNodes[(j + 1) % elmtNodes.Length];
+          AddFace(element, fromNode, toNode);
+        }
+      }
+      //watch.Stop();
+      //Console.Out.WriteLine("Build faces       " + watch.Elapsed.TotalSeconds);
+      //watch.Reset();
+
+      // Figure out boundary code
+      for (int i = 0; i < Faces.Count; i++)
+      {
+        SMeshFace face = Faces[i];
+        face.SetBoundaryCode(this, errors);
+      }
+
+      if (!nodeFaces)
+      {
+        NodesFaces = null;
+      }
+
+      if (elmtFaces)
+      {
+        // Add face to the elements list of faces
+        for (int i = 0; i < Faces.Count; i++)
+        {
+          SMeshFace face = Faces[i];
+          ElementsFaces[face.LeftElement].Add(i);
+          if (face.RightElement >= 0)
+            ElementsFaces[face.RightElement].Add(i);
+        }
+      }
+
+      return errors;
+    }
+
+    /// <summary>
+    /// Create and add a face.
+    /// <para>
+    /// A face is only "added once", i.e. when two elements share the face, it is found twice,
+    /// once defined as "toNode"-"fromNode" and once as "fromNode"-"toNode". The second time,
+    /// the existing face is being reused, and the element is added as the <see cref="MeshFace.RightElement"/>
+    /// </para>
+    /// <para>
+    /// The <see cref="MeshFace"/> is added to the global list of faces, and also to tne nodes list of faces.
+    /// </para>
+    /// </summary>
+    private void AddFace(int element, int fromNode, int toNode)
+    {
+      List<int> fromNodeFaces = NodesFaces[fromNode];
+      List<int> toNodeFaces   = NodesFaces[toNode];
+
+      // Try find "reverse face" going from from-node to to-node.
+      // The FindIndex with delegate is 10+ times slower than the tight loop below.
+      //int reverseFaceIndex = toNodeFaces.FindIndex(mf => mf.ToNode == fromNode);
+      int reverseToNodeFaceIndex = -1;
+      for (int i = 0; i < toNodeFaces.Count; i++)
+      {
+        if (Faces[toNodeFaces[i]].ToNode == fromNode)
+        {
+          reverseToNodeFaceIndex = i;
+          break;
+        }
+      }
+
+      if (reverseToNodeFaceIndex >= 0)
+      {
+        // Found reverse face, reuse it and add the element as the RightElement
+        SMeshFace reverseFace = Faces[toNodeFaces[reverseToNodeFaceIndex]];
+        reverseFace.RightElement = element;
+      }
+      else
+      {
+        // Found new face, set element as LeftElement and add it to both from-node and to-node
+        SMeshFace meshFace = new SMeshFace(fromNode, toNode)
+        {
+          LeftElement = element,
+        };
+
+        Faces.Add(meshFace);
+        fromNodeFaces.Add(Faces.Count-1);
+        toNodeFaces.Add(Faces.Count-1);
+      }
+    }
+
+    /// <summary>
+    /// Create and add a face - special version for <see cref="MeshBoundaryExtensions.GetBoundaryFaces"/>
+    /// <para>
+    /// A face is only "added once", i.e. when two elements share the face, it is found twice,
+    /// once defined as "toNode"-"fromNode" and once as "fromNode"-"toNode". The second time,
+    /// the existing face is being reused, and the element is added as the <see cref="MeshFace.RightElement"/>
+    /// </para>
+    /// <para>
+    /// The <see cref="MeshFace"/> is added to the global list of faces, and also to tne nodes list of faces.
+    /// </para>
+    /// </summary>
+    internal static void AddFace(int element, int fromNode, int toNode, List<SMeshFace>[] nodeFaces)
+    {
+      List<SMeshFace> fromNodeFaces = nodeFaces[fromNode];
+      List<SMeshFace> toNodeFaces = nodeFaces[toNode];
+
+      // Try find "reverse face" going from from-node to to-node.
+      // The FindIndex with delegate is 10+ times slower than the tight loop below.
+      //int reverseFaceIndex = toNodeFaces.FindIndex(mf => mf.ToNode == fromNode);
+      int reverseFaceIndex = -1;
+      for (int i = 0; i < toNodeFaces.Count; i++)
+      {
+        if (toNodeFaces[i].ToNode == fromNode)
+        {
+          reverseFaceIndex = i;
+          break;
+        }
+      }
+
+      if (reverseFaceIndex >= 0)
+      {
+        // Found reverse face, reuse it and add the elment as the RightElement
+        SMeshFace reverseFace = toNodeFaces[reverseFaceIndex];
+        reverseFace.RightElement = element;
+      }
+      else
+      {
+        // Found new face, set element as LeftElement and add it to both from-node and to-node
+        SMeshFace meshFace = new SMeshFace(fromNode, toNode)
+        {
+          LeftElement = element,
+        };
+
+        fromNodeFaces.Add(meshFace);
+        //toNodeFaces.Add(meshFace);
+      }
+    }
+
+    /// <summary>
+    /// Determines whether the specified mesh geometry is equal to the current mesh's geometry.
+    /// The order of the nodes and elements in the mesh must equal.
+    /// <para>
+    /// This only checks the geometry, i.e. node coordinates, node boundary codes and element connectivity.
+    /// The Id's in the mesh may differ. 
+    /// </para>
+    /// </summary>
+    /// <param name="other"></param>
+    /// <param name="tolerance"></param>
+    public bool EqualsGeometry(SMeshData other, double tolerance = 1e-3)
+    {
+      if (this.NumberOfNodes != other.NumberOfNodes ||
+          this.NumberOfElements != other.NumberOfElements)
+        return false;
+
+      for (int i = 0; i < this.NumberOfNodes; i++)
+      {
+        if (Math.Abs(this.X[i] - other.X[i]) > tolerance ||
+            Math.Abs(this.Y[i] - other.Y[i]) > tolerance ||
+            this.Code[i] != other.Code[i])
+          return false;
+      }
+
+      for (int i = 0; i < this.NumberOfElements; i++)
+      {
+        if (this.ElementTable[i].Length != other.ElementTable[i].Length)
+          return false;
+        for (int j = 0; j < this.ElementTable[i].Length; j++)
+        {
+          if (this.ElementTable[i][j] != other.ElementTable[i][j])
+            return false;
+        }
+      }
+      return true;
     }
   }
 }

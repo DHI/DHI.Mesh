@@ -15,6 +15,14 @@ namespace DHI.Mesh
   [DebuggerDisplay("MeshFace: {FromNode.Index}-{ToNode.Index} ({LeftElement.Index},{RightElement?.Index})")]
   public class MeshFace
   {
+    public MeshFace(MeshNode fromNode, MeshNode toNode)
+    {
+      FromNode     = fromNode;
+      ToNode       = toNode;
+      LeftElement  = null;
+      RightElement = null;
+      Code         = 0;
+    }
     /// <summary> From node - start point of face </summary>
     public MeshNode FromNode { get; set; }
     /// <summary> to node - end point of face </summary>

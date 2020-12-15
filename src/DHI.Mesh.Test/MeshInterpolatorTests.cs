@@ -142,19 +142,19 @@ namespace DHI.Mesh.Test
 
       string triMesh = UnitTestHelper.TestDataDir + "odense_rough.mesh";
       string quadMesh = UnitTestHelper.TestDataDir + "odense_rough_quads.mesh";
-      InterpolationAccuracyTest(triMesh, quadMesh, CircularValueTypes.Normal);
-      InterpolationAccuracyTest(quadMesh, triMesh, CircularValueTypes.Normal);
-      InterpolationAccuracyTest(triMesh, quadMesh, CircularValueTypes.Degrees180);
-      InterpolationAccuracyTest(quadMesh, triMesh, CircularValueTypes.Degrees180);
-      InterpolationAccuracyTest(triMesh, quadMesh, CircularValueTypes.Degrees360);
-      InterpolationAccuracyTest(quadMesh, triMesh, CircularValueTypes.Degrees360);
-      InterpolationAccuracyTest(triMesh, quadMesh, CircularValueTypes.RadiansPi);
-      InterpolationAccuracyTest(quadMesh, triMesh, CircularValueTypes.RadiansPi);
-      InterpolationAccuracyTest(triMesh, quadMesh, CircularValueTypes.Radians2Pi);
-      InterpolationAccuracyTest(quadMesh, triMesh, CircularValueTypes.Radians2Pi);
+      InterpolationAccuracyTest(triMesh,  quadMesh, CircularValueTypes.Normal);
+      InterpolationAccuracyTest(quadMesh, triMesh,  CircularValueTypes.Normal);
+      InterpolationAccuracyTest(triMesh,  quadMesh, CircularValueTypes.Degrees180);
+      InterpolationAccuracyTest(quadMesh, triMesh,  CircularValueTypes.Degrees180);
+      InterpolationAccuracyTest(triMesh,  quadMesh, CircularValueTypes.Degrees360);
+      InterpolationAccuracyTest(quadMesh, triMesh,  CircularValueTypes.Degrees360);
+      InterpolationAccuracyTest(triMesh,  quadMesh, CircularValueTypes.RadiansPi);
+      InterpolationAccuracyTest(quadMesh, triMesh,  CircularValueTypes.RadiansPi);
+      InterpolationAccuracyTest(triMesh,  quadMesh, CircularValueTypes.Radians2Pi);
+      InterpolationAccuracyTest(quadMesh, triMesh,  CircularValueTypes.Radians2Pi);
     }
 
-    public void InterpolationAccuracyTest(string sourceMeshFileName, string targetMeshFileName, CircularValueTypes cvt = CircularValueTypes.Normal)
+    public void InterpolationAccuracyTest(string sourceMeshFileName, string targetMeshFileName, CircularValueTypes cvt = CircularValueTypes.Normal, int[] elmtsToSkipCompare = null)
     {
       // Source mesh
       MeshFile meshFile = MeshFile.ReadMesh(sourceMeshFileName);
@@ -195,6 +195,7 @@ namespace DHI.Mesh.Test
       interpolator.InterpolateToTarget(elmtVals, targetValues);
 
       // Check node values
+      bool ok = true;
       for (int i = 0; i < targetmesh.Elements.Count; i++)
       {
         MeshElement targetElmt = targetmesh.Elements[i];
@@ -209,12 +210,17 @@ namespace DHI.Mesh.Test
         // fully internal (no boundary nodes).
         bool internalElmt = targetElmt.Nodes.Select(node => node.Code).All(code => code == 0);
 
+        if (elmtsToSkipCompare != null && elmtsToSkipCompare.Contains(i))
+          internalElmt = false;
+
         if (internalElmt && diff > 1e-6 * Math.Max(Math.Abs(exactValue), 1))
         {
-          string msg = string.Format("{0,2} : {1}-{2}={3} ({4},{5})", i, exactValue, interpValue, diff, targetElmt.XCenter, targetElmt.YCenter);
+          string msg = string.Format("FAIL: {0,2} : {1} - {2} = {3} ({4},{5})", i, exactValue, interpValue, diff, targetElmt.XCenter, targetElmt.YCenter);
           Console.Out.WriteLine(msg);
-          Assert.Fail(msg);
+          ok = false;
         }
+        if (!ok)
+          Assert.Fail("");
       }
     }
 

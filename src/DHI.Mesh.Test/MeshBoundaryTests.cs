@@ -27,9 +27,13 @@ plot "out_odense_rough-bnd.txt" index 0 with linespoints linestyle 1, '' index 1
     {
       string triMesh = UnitTestHelper.TestDataDir + "odense_rough.mesh";
       MeshFile meshFile = MeshFile.ReadMesh(triMesh);
-      MeshData mesh     = meshFile.ToMeshData();
 
+      Stopwatch timer = new Stopwatch();
+      timer.Start();
+      MeshData           mesh       = meshFile.ToMeshData();
       List<MeshBoundary> boundaries = mesh.BuildBoundaryList();
+      timer.Stop();
+      Console.Out.WriteLine("time:" + timer.Elapsed.TotalSeconds);
 
       Assert.AreEqual(2, boundaries.Count);
       Assert.AreEqual(1, boundaries[0].Code);
@@ -62,5 +66,48 @@ plot "out_odense_rough-bnd.txt" index 0 with linespoints linestyle 1, '' index 1
 
     }
 
+    [Test]
+    public void SMeshBoundaryToFileTest()
+    {
+      string   triMesh  = UnitTestHelper.TestDataDir + "odense_rough.mesh";
+      MeshFile meshFile = MeshFile.ReadMesh(triMesh);
+
+      Stopwatch timer    = new Stopwatch();
+      timer.Start();
+      SMeshData           mesh       = meshFile.ToSMeshData();
+      List<SMeshBoundary> boundaries = mesh.BuildBoundaryList();
+      timer.Stop();
+      Console.Out.WriteLine("time:" + timer.Elapsed.TotalSeconds);
+
+      Assert.AreEqual(2, boundaries.Count);
+      Assert.AreEqual(1, boundaries[0].Code);
+      Assert.AreEqual(2, boundaries[1].Code);
+
+      Assert.AreEqual(2, boundaries[0].Segments.Count);
+      Assert.AreEqual(1, boundaries[1].Segments.Count);
+      Assert.AreEqual(9, boundaries[1].Segments[0].Count);
+
+      // First node of the first code-1 boundary segment is the last node of the code-2 boundary segment
+      Assert.IsTrue(boundaries[0].Segments[0][0].FromNode == boundaries[1].Segments[0].Last().ToNode);
+      Assert.IsTrue(boundaries[0].Segments[0].Last().ToNode == boundaries[1].Segments[0][0].FromNode);
+
+      StreamWriter writer = new StreamWriter(UnitTestHelper.TestDataDir + "out_odense_rough-sbnd.txt");
+      foreach (SMeshBoundary meshBoundary in boundaries)
+      {
+        writer.WriteLine("# " + meshBoundary.Code);
+        foreach (List<SMeshFace> segment in meshBoundary.Segments)
+        {
+          writer.WriteLine(string.Format(CultureInfo.InvariantCulture, "{0} {1}", mesh.X[segment[0].FromNode], mesh.Y[segment[0].FromNode]));
+          foreach (SMeshFace face in segment)
+          {
+            writer.WriteLine(string.Format(CultureInfo.InvariantCulture, "{0} {1}", mesh.X[face.ToNode], mesh.Y[face.ToNode]));
+          }
+          writer.WriteLine("");
+        }
+        writer.WriteLine("");
+      }
+      writer.Close();
+
+    }
   }
 }

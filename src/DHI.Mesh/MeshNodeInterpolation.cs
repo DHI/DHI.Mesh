@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace DHI.Mesh
 {
@@ -76,20 +77,21 @@ namespace DHI.Mesh
 
       double omegaTot = 0;
 
+      // Pseudo-Laplacian only works in case of more than 3 elements connected to the node.
       if (node.Elements.Count >= 3)
       {
 
-        double Ixx      = 0;
-        double Iyy      = 0;
-        double Ixy      = 0;
-        double Rx       = 0;
-        double Ry       = 0;
+        double Ixx = 0;
+        double Iyy = 0;
+        double Ixy = 0;
+        double Rx  = 0;
+        double Ry  = 0;
 
         for (int i = 0; i < node.Elements.Count; i++)
         {
           MeshElement element = node.Elements[i];
-          double      dx      = element.XCenter - node.X;
-          double      dy      = element.YCenter - node.Y;
+          double dx = element.XCenter - node.X;
+          double dy = element.YCenter - node.Y;
 
           Ixx += dx * dx;
           Iyy += dy * dy;
@@ -106,14 +108,14 @@ namespace DHI.Mesh
         {
           // Standard case - Pseudo Laplacian
 
+          double lambda_x = (Ixy * Ry - Iyy * Rx) / lambda;
+          double lambda_y = (Ixy * Rx - Ixx * Ry) / lambda;
+
           for (int i = 0; i < node.Elements.Count; i++)
           {
             MeshElement element = node.Elements[i];
-            double      dx      = element.XCenter - node.X;
-            double      dy      = element.YCenter - node.Y;
-
-            double lambda_x = (Ixy * Ry - Iyy * Rx) / lambda;
-            double lambda_y = (Ixy * Rx - Ixx * Ry) / lambda;
+            double dx = element.XCenter - node.X;
+            double dy = element.YCenter - node.Y;
 
             double omega = 1.0 + lambda_x * dx + lambda_y * dy;
             if (!_allowExtrapolation)
@@ -138,16 +140,18 @@ namespace DHI.Mesh
         for (int i = 0; i < node.Elements.Count; i++)
         {
           MeshElement element = node.Elements[i];
-          double      dx      = element.XCenter - node.X;
-          double      dy      = element.YCenter - node.Y;
+          double dx = element.XCenter - node.X;
+          double dy = element.YCenter - node.Y;
 
           // Inverse distance weighted interpolation weight
           double omega = 1 / Math.Sqrt(dx * dx + dy * dy);
 
+          interpData.Indices[i] =  element.Index;
           interpData.Weights[i] =  omega;
           omegaTot              += omega;
         }
       }
+
 
       // Scale to 1
       if (omegaTot != 0)
@@ -175,7 +179,6 @@ namespace DHI.Mesh
 
       return interpData;
     }
-
 
   }
 }

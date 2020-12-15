@@ -36,6 +36,17 @@ namespace DHI.Mesh
     public MeshUnit ZUnit { get; set; }
 
     /// <summary>
+    /// Number of nodes in the mesh.
+    /// </summary>
+    public int NumberOfNodes { get { return (Nodes.Count); } }
+
+    /// <summary>
+    /// Number of elements in the mesh
+    /// </summary>
+    public int NumberOfElements { get { return (Elements.Count); } }
+
+
+    /// <summary>
     /// Nodes in the mesh.
     /// </summary>
     public List<MeshNode> Nodes { get; set; }
@@ -48,10 +59,11 @@ namespace DHI.Mesh
     /// Element faces.
     /// <para>
     /// This is a derived feature. It is initially null, but can be created by calling
+    /// <see cref="BuildFaces"/> or 
     /// <see cref="BuildDerivedData"/>.
     /// </para>
     /// </summary>
-    public List<MeshFace> Faces { get; set; }
+    public List<MeshFace> Faces { get; private set; }
 
     #endregion
 
@@ -182,7 +194,7 @@ namespace DHI.Mesh
         for (int j = 0; j < elmtNodes.Count; j++)
         {
           MeshNode fromNode = elmtNodes[j];
-          MeshNode toNode = elmtNodes[(j + 1) % elmtNodes.Count];
+          MeshNode toNode   = elmtNodes[(j + 1) % elmtNodes.Count];
           AddFace(element, fromNode, toNode);
         }
       }
@@ -233,40 +245,30 @@ namespace DHI.Mesh
       List<MeshFace> fromNodeFaces = fromNode.Faces;
       List<MeshFace> toNodeFaces = toNode.Faces;
 
-      //if (fromNodeFaces.FindIndex(mf => mf.ToNode == toNode) >= 0)
-      //{
-      //  throw new Exception (string.Format("Invalid mesh: Double face, from node {0} to node {1}. " +
-      //                           "Hint: Probably too many nodes was merged into one of the two face nodes." +
-      //                           "Try decrease node merge tolerance value",
-      //                           fromNode.Index + 1, toNode.Index + 1));
-      //}
-
       // Try find "reverse face" going from from-node to to-node.
       // The FindIndex with delegate is 10+ times slower than the tight loop below.
       //int reverseFaceIndex = toNodeFaces.FindIndex(mf => mf.ToNode == fromNode);
-      int reverseFaceIndex = -1;
+      int reverseToNodeFaceIndex = -1;
       for (int i = 0; i < toNodeFaces.Count; i++)
       {
         if (toNodeFaces[i].ToNode == fromNode)
         {
-          reverseFaceIndex = i;
+          reverseToNodeFaceIndex = i;
           break;
         }
       }
 
-      if (reverseFaceIndex >= 0)
+      if (reverseToNodeFaceIndex >= 0)
       {
         // Found reverse face, reuse it and add the elment as the RightElement
-        MeshFace reverseFace = toNodeFaces[reverseFaceIndex];
+        MeshFace reverseFace = toNodeFaces[reverseToNodeFaceIndex];
         reverseFace.RightElement = element;
       }
       else
       {
         // Found new face, set element as LeftElement and add it to both from-node and to-node
-        MeshFace meshFace = new MeshFace()
+        MeshFace meshFace = new MeshFace(fromNode, toNode)
         {
-          FromNode = fromNode,
-          ToNode = toNode,
           LeftElement = element,
         };
 
@@ -314,10 +316,8 @@ namespace DHI.Mesh
       else
       {
         // Found new face, set element as LeftElement and add it to both from-node and to-node
-        MeshFace meshFace = new MeshFace()
+        MeshFace meshFace = new MeshFace(fromNode, toNode)
         {
-          FromNode = fromNode,
-          ToNode = toNode,
           LeftElement = element,
         };
 
@@ -367,6 +367,4 @@ namespace DHI.Mesh
       return true;
     }
   }
-
-
 }
