@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading;
-using DHI.Generic.MikeZero.DFS;
-using DHI.Generic.MikeZero.DFS.dfsu;
+﻿using System.Collections.Generic;
 using NUnit.Framework;
 
 namespace DHI.Mesh.Test

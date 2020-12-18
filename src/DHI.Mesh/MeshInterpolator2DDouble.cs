@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace DHI.Mesh
+﻿namespace DHI.Mesh
 {
   // These methods are put in seperate file to ease comparision of float and double version
   public partial class MeshInterpolator2D

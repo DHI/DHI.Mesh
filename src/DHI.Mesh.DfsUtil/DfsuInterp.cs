@@ -40,7 +40,7 @@ namespace DHI.Mesh.DfsUtil
       builder.SetTimeInfo(sourceDfsu.StartDateTime, sourceDfsu.TimeStepInSeconds);
 
       // Add dynamic items, copying from source
-      foreach (DfsuDynamicItemInfo itemInfo in sourceDfsu.ItemInfo)
+      foreach (IDfsSimpleDynamicItemInfo itemInfo in sourceDfsu.ItemInfo)
       {
         builder.AddDynamicItem(itemInfo.Name, itemInfo.Quantity);
       }
@@ -147,7 +147,7 @@ namespace DHI.Mesh.DfsUtil
       builder.SetTimeInfo(refdfsu.StartDateTime, refdfsu.TimeStepInSeconds);
 
       // Add dynamic items, copying from source
-      foreach (DfsuDynamicItemInfo itemInfo in refdfsu.ItemInfo)
+      foreach (IDfsSimpleDynamicItemInfo itemInfo in refdfsu.ItemInfo)
       {
         builder.AddDynamicItem(itemInfo.Name, itemInfo.Quantity);
       }

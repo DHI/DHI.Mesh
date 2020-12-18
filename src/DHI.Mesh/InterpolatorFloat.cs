@@ -1,5 +1,4 @@
-﻿using System;
-
+﻿
 namespace DHI.Mesh
 {
   // These methods are put in seperate file to ease comparision of float and double version

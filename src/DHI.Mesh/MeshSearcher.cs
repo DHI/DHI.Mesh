@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using GeoAPI.Geometries;
 #if NTS173
 using GisSharpBlog.NetTopologySuite.Geometries;

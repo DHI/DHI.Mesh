@@ -33,8 +33,6 @@ namespace DHI.Mesh
     private int[]   _elementType;
     private int[][] _connectivity;
 
-    private bool _hasQuads;
-
 
     /// <summary>
     /// Projection string, in WKT format

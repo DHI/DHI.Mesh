@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 
 namespace DHI.Mesh
 {
@@ -20,10 +19,6 @@ namespace DHI.Mesh
   {
     private bool         _allowExtrapolation;
     private Interpolator _nodeInterpolator;
-    
-    public MeshNodeInterpolation()
-    {
-    }
 
     /// <summary>
     /// Allow extrapolation, by disabling clipping of the omega weights

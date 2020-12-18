@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace DHI.Mesh
+﻿namespace DHI.Mesh
 {
   /// <summary>
   /// Does interpolation from source data to target data.
