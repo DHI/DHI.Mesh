@@ -284,8 +284,8 @@ namespace DHI.Mesh
       {
         MeshNode node = meshData.Nodes[i];
         nodeId[i] = node.Id;
-        x[i] = node.Y;
-        y[i] = node.X;
+        x[i] = node.X;
+        y[i] = node.Y;
         z[i] = node.Z;
         code[i] = node.Code;
       }
@@ -301,7 +301,7 @@ namespace DHI.Mesh
         elmtTable[i] = elmtNodes;
         for (int j = 0; j < elmt.Nodes.Count; j++)
         {
-          elmtNodes[j] = elmt.Nodes[i].Index + 1;
+          elmtNodes[j] = elmt.Nodes[j].Index + 1;
         }
       }
 
