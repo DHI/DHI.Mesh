@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using CMeshFace=DHI.Mesh.MeshFace;
 
 namespace DHI.Mesh
 {
@@ -62,12 +63,16 @@ namespace DHI.Mesh
     /// <see cref="BuildDerivedData"/>.
     /// </para>
     /// </summary>
-    public List<MeshFace> Faces { get; private set; }
+    public List<CMeshFace> Faces { get; private set; }
 
     #endregion
 
     /// <summary>
-    /// Create mesh from arrays. 
+    /// Create mesh from arrays.
+    /// <para>
+    /// Note that the <paramref name="connectivity"/> array is using zero-based indices
+    /// (as compared to the <see cref="MeshFile.ElementTable"/>, which is using one-based indices)
+    /// </para>
     /// </summary>
     public static MeshData CreateMesh(string projection, int[] nodeIds, double[] x, double[] y, double[] z, int[] code, int[] elementIds, int[] elementTypes, int[][] connectivity, MeshUnit zUnit = MeshUnit.Meter)
     {
@@ -109,7 +114,7 @@ namespace DHI.Mesh
 
         for (int j = 0; j < numNodesInElmt; j++)
         {
-          int nodeIndex = nodeInElmt[j]-1;
+          int nodeIndex = nodeInElmt[j];
           MeshNode meshNode = meshData.Nodes[nodeIndex];
           element.Nodes.Add(meshNode);
           xc += meshNode.X;
@@ -135,12 +140,15 @@ namespace DHI.Mesh
     public List<string> BuildDerivedData()
     {
       BuildNodeElements();
-      List<string> errors = BuildFaces(true, true);
+      List<string> errors = BuildFaces(true);
       return errors;
     }
 
     public void BuildNodeElements()
     {
+      if (Nodes[0].Elements != null)
+        return;
+
       // Build up element list in nodes
       for (int i = 0; i < Nodes.Count; i++)
       {
@@ -164,66 +172,78 @@ namespace DHI.Mesh
     /// <summary>
     /// Build up the list of <see cref="Faces"/>
     /// </summary>
-    /// <param name="nodeFaces">Also build up <see cref="MeshNode.Faces"/></param>
     /// <param name="elmtFaces">Also build up <see cref="MeshElement.Faces"/></param>
-    public List<string> BuildFaces(bool nodeFaces = false, bool elmtFaces = false)
+    public List<string> BuildFaces(bool elmtFaces = false)
     {
       List<string> errors = new List<string>();
 
-      // Build up face lists
-      Faces = new List<MeshFace>();
+      int numberOfNodes    = NumberOfNodes;
+      int numberOfElements = NumberOfElements;
 
-      //System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
-      //watch.Start();
-      // Preallocate list of face on all nodes - used in next loop
-      for (int i = 0; i < Nodes.Count; i++)
-        Nodes[i].Faces = new List<MeshFace>();
-      //watch.Stop();
-      //Console.Out.WriteLine("Prealloc nodeface " + watch.Elapsed.TotalSeconds);
-      //watch.Reset();
+      bool hasElementFaces = Elements[0].Faces != null;
 
-      //watch.Start();
-      // Create all faces.
-      for (int ielmt = 0; ielmt < Elements.Count; ielmt++)
+      //System.Diagnostics.Stopwatch timer = MeshExtensions.StartTimer();
+
+      if (Faces == null)
       {
-        MeshElement element = Elements[ielmt];
-        if (elmtFaces)
-          element.Faces = new List<MeshFace>();
-        List<MeshNode> elmtNodes = element.Nodes;
-        for (int j = 0; j < elmtNodes.Count; j++)
-        {
-          MeshNode fromNode = elmtNodes[j];
-          MeshNode toNode   = elmtNodes[(j + 1) % elmtNodes.Count];
-          AddFace(element, fromNode, toNode);
-        }
-      }
-      //watch.Stop();
-      //Console.Out.WriteLine("Build faces       " + watch.Elapsed.TotalSeconds);
-      //watch.Reset();
 
-      // Figure out boundary code
-      for (int i = 0; i < Faces.Count; i++)
-      {
-        MeshFace face = Faces[i];
-        face.SetBoundaryCode(errors);
-      }
+        // Build up face lists
+        // The exact number of faces is: NumberOfElements+NumberOfNodes + numberOfSubMeshes - numberOfHoles
+        Faces = new List<CMeshFace>((int)((numberOfElements+numberOfNodes)*1.01));
 
-      if (!nodeFaces)
-      {
+        // Preallocate list of face on all nodes - used in next loop
         for (int i = 0; i < Nodes.Count; i++)
-          Nodes[i].Faces = null;
+          Nodes[i].Faces = new List<CMeshFace>();
+        //timer.ReportAndRestart("Prealloc nodeface");
+
+        //watch.Start();
+        // Create all faces.
+        for (int ielmt = 0; ielmt < Elements.Count; ielmt++)
+        {
+          MeshElement element = Elements[ielmt];
+          List<MeshNode> elmtNodes = element.Nodes;
+          if (elmtFaces)
+            element.Faces = new List<CMeshFace>(elmtNodes.Count);
+          for (int j = 0; j < elmtNodes.Count; j++)
+          {
+            MeshNode fromNode = elmtNodes[j];
+            MeshNode toNode   = elmtNodes[(j + 1) % elmtNodes.Count];
+            AddFace(element, fromNode, toNode);
+          }
+        }
+        //timer.ReportAndRestart("Create faces "+Faces.Count);
+
+        // Figure out boundary code
+        for (int i = 0; i < Faces.Count; i++)
+        {
+          CMeshFace face = Faces[i];
+          face.SetBoundaryCode(errors);
+        }
+        //timer.ReportAndRestart("Set Boundary Code");
+
       }
 
-      if (elmtFaces)
+      if (elmtFaces && !hasElementFaces)
       {
+        // If not already created, create the lists
+        if (Elements[0].Faces == null)
+        {
+          for (int ielmt = 0; ielmt < numberOfElements; ielmt++)
+          {
+            Elements[ielmt].Faces = new List<CMeshFace>();
+          }
+        }
+
         // Add face to the elements list of faces
         for (int i = 0; i < Faces.Count; i++)
         {
-          MeshFace face = Faces[i];
+          CMeshFace face = Faces[i];
           face.LeftElement.Faces.Add(face);
-          face.RightElement?.Faces.Add(face);
+          if (face.RightElement != null)
+            face.RightElement.Faces.Add(face);
         }
       }
+      //timer.ReportAndRestart("Create element faces");
 
       return errors;
     }
@@ -233,23 +253,25 @@ namespace DHI.Mesh
     /// <para>
     /// A face is only "added once", i.e. when two elements share the face, it is found twice,
     /// once defined as "toNode"-"fromNode" and once as "fromNode"-"toNode". The second time,
-    /// the existing face is being reused, and the element is added as the <see cref="MeshFace.RightElement"/>
+    /// the existing face is being reused, and the element is added as the <see cref="CMeshFace.RightElement"/>
     /// </para>
     /// <para>
-    /// The <see cref="MeshFace"/> is added to the global list of faces, and also to tne nodes list of faces.
+    /// The <see cref="CMeshFace"/> is added to the global list of faces, and also to tne nodes list of faces.
     /// </para>
     /// </summary>
     private void AddFace(MeshElement element, MeshNode fromNode, MeshNode toNode)
     {
-      List<MeshFace> fromNodeFaces = fromNode.Faces;
-      List<MeshFace> toNodeFaces = toNode.Faces;
+      List<CMeshFace> fromNodeFaces = fromNode.Faces;
+      List<CMeshFace> toNodeFaces = toNode.Faces;
 
-      // Try find "reverse face" going from from-node to to-node.
+      // Try find "reverse face" going from to-node to from-node.
       // The FindIndex with delegate is 10+ times slower than the tight loop below.
       //int reverseFaceIndex = toNodeFaces.FindIndex(mf => mf.ToNode == fromNode);
       int reverseToNodeFaceIndex = -1;
+      // Look in all faces starting from toNode
       for (int i = 0; i < toNodeFaces.Count; i++)
       {
+        // Check if the face goes to fromNode
         if (toNodeFaces[i].ToNode == fromNode)
         {
           reverseToNodeFaceIndex = i;
@@ -259,20 +281,22 @@ namespace DHI.Mesh
 
       if (reverseToNodeFaceIndex >= 0)
       {
-        // Found reverse face, reuse it and add the elment as the RightElement
-        MeshFace reverseFace = toNodeFaces[reverseToNodeFaceIndex];
+        // Found reverse face, reuse it and add the element as the RightElement
+        CMeshFace reverseFace = toNodeFaces[reverseToNodeFaceIndex];
         reverseFace.RightElement = element;
       }
       else
       {
         // Found new face, set element as LeftElement and add it to both from-node and to-node
-        MeshFace meshFace = new MeshFace(fromNode, toNode)
+        CMeshFace meshFace = new CMeshFace(fromNode, toNode)
         {
           LeftElement = element,
         };
 
         Faces.Add(meshFace);
         fromNodeFaces.Add(meshFace);
+        // Adding to toNodeFaces is not required for the algorithm to work,
+        // however, it is required in order to get NodesFaces lists right
         toNodeFaces.Add(meshFace);
       }
     }
@@ -282,16 +306,16 @@ namespace DHI.Mesh
     /// <para>
     /// A face is only "added once", i.e. when two elements share the face, it is found twice,
     /// once defined as "toNode"-"fromNode" and once as "fromNode"-"toNode". The second time,
-    /// the existing face is being reused, and the element is added as the <see cref="MeshFace.RightElement"/>
+    /// the existing face is being reused, and the element is added as the <see cref="CMeshFace.RightElement"/>
     /// </para>
     /// <para>
-    /// The <see cref="MeshFace"/> is added to the global list of faces, and also to tne nodes list of faces.
+    /// The <see cref="CMeshFace"/> is added to the global list of faces, and also to tne nodes list of faces.
     /// </para>
     /// </summary>
-    internal static void AddFace(MeshElement element, MeshNode fromNode, MeshNode toNode, List<MeshFace>[] nodeFaces)
+    internal static void AddFace(MeshElement element, MeshNode fromNode, MeshNode toNode, List<CMeshFace>[] nodeFaces)
     {
-      List<MeshFace> fromNodeFaces = nodeFaces[fromNode.Index];
-      List<MeshFace> toNodeFaces = nodeFaces[toNode.Index];
+      List<CMeshFace> fromNodeFaces = nodeFaces[fromNode.Index];
+      List<CMeshFace> toNodeFaces = nodeFaces[toNode.Index];
 
       // Try find "reverse face" going from from-node to to-node.
       // The FindIndex with delegate is 10+ times slower than the tight loop below.
@@ -308,20 +332,19 @@ namespace DHI.Mesh
 
       if (reverseFaceIndex >= 0)
       {
-        // Found reverse face, reuse it and add the elment as the RightElement
-        MeshFace reverseFace = toNodeFaces[reverseFaceIndex];
+        // Found reverse face, reuse it and add the element as the RightElement
+        CMeshFace reverseFace = toNodeFaces[reverseFaceIndex];
         reverseFace.RightElement = element;
       }
       else
       {
         // Found new face, set element as LeftElement and add it to both from-node and to-node
-        MeshFace meshFace = new MeshFace(fromNode, toNode)
+        CMeshFace meshFace = new CMeshFace(fromNode, toNode)
         {
           LeftElement = element,
         };
 
         fromNodeFaces.Add(meshFace);
-        //toNodeFaces.Add(meshFace);
       }
     }
 

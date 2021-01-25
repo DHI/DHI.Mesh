@@ -69,7 +69,7 @@ namespace DHI.Mesh.Test
       Assert.AreEqual(43, mesh.Nodes[4].Elements[2].Id);
       Assert.AreEqual(58, mesh.Nodes[4].Elements[3].Id);
 
-      mesh.BuildFaces(true, true);
+      mesh.BuildFaces(true);
       FaceRevert(mesh, mesh.Faces);
       mesh.Faces.Sort(FaceSortComparer);
       Assert.AreEqual(1259, mesh.Faces.Count);

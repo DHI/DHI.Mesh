@@ -132,6 +132,12 @@
     <Compile Include="..\DHI.Mesh\SMeshSearcher.cs">
       <Link>SMeshSearcher.cs</Link>
     </Compile>
+    <Compile Include="..\DHI.Mesh\SubMesh.cs">
+      <Link>SubMesh.cs</Link>
+    </Compile>
+    <Compile Include="..\DHI.Mesh\SSubMesh.cs">
+      <Link>SSubMesh.cs</Link>
+    </Compile>
     <Compile Include="..\DHI.Mesh\MeshUnit.cs">
       <Link>MeshUnit.cs</Link>
     </Compile>

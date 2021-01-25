@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 
 namespace DHI.Mesh
 {
@@ -256,7 +257,7 @@ namespace DHI.Mesh
     /// </summary>
     public static MeshData ToMeshData(this MeshFile file)
     {
-      return MeshData.CreateMesh(file.Projection, file.NodeIds, file.X, file.Y, file.Z, file.Code, file.ElementIds, file.ElementType, file.ElementTable, file.ZUnit);
+      return MeshData.CreateMesh(file.Projection, file.NodeIds, file.X, file.Y, file.Z, file.Code, file.ElementIds, file.ElementType, file.ElementTable.ToZeroBased(), file.ZUnit);
     }
 
     /// <summary>
@@ -326,12 +327,11 @@ namespace DHI.Mesh
       meshData.ToMeshFile().Write(filename);
     }
 
-    public static void ReportAndRestart(this System.Diagnostics.Stopwatch timer, string txt)
+    public static System.Diagnostics.Stopwatch StartTimer()
     {
-      timer.Stop();
-      Console.Out.WriteLine("{0}: {1}", txt, timer.Elapsed.TotalSeconds);
-      timer.Reset();
+      System.Diagnostics.Stopwatch timer = new System.Diagnostics.Stopwatch();
       timer.Start();
+      return timer;
     }
 
     public static void Report(this System.Diagnostics.Stopwatch timer, string txt)
@@ -340,6 +340,15 @@ namespace DHI.Mesh
       Console.Out.WriteLine("{0}: {1}", txt, timer.Elapsed.TotalSeconds);
       timer.Reset();
     }
+
+    public static void ReportAndRestart(this System.Diagnostics.Stopwatch timer, string txt)
+    {
+      timer.Stop();
+      Console.Out.WriteLine("{0}: {1}", txt, timer.Elapsed.TotalSeconds);
+      timer.Reset();
+      timer.Start();
+    }
+
 
   }
 }
