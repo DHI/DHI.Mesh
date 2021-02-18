@@ -146,6 +146,17 @@ namespace DHI.Mesh
     }
 
     /// <summary>
+    /// Returns true if point is inside quadrangle limited by the points (t0, t1, t2, t3)
+    /// </summary>
+    public static bool IsPointInsideQuadrangle(double x, double y, double t0x, double t0y, double t1x, double t1y, double t2x, double t2y, double t3x, double t3y)
+    {
+      return (LeftOf(x, y, t0x, t0y, t1x, t1y) >= 0 &&
+              LeftOf(x, y, t1x, t1y, t2x, t2y) >= 0 &&
+              LeftOf(x, y, t2x, t2y, t3x, t3y) >= 0 &&
+              LeftOf(x, y, t3x, t3y, t0x, t0y) >= 0);
+    }
+
+    /// <summary>
     /// Returns true if (x,y) coordinate is within the space limited by right line and left line, where left and right line
     /// originate from the center point, i.e. right line is (center)-(right) and left line is (center)-(left).
     /// </summary>
