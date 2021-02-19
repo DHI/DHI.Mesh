@@ -1,4 +1,6 @@
-﻿namespace DHI.Mesh
+﻿using System;
+
+namespace DHI.Mesh
 {
   // These methods are put in seperate file to ease comparision of float and double version
   public partial class MeshInterpolator2D
@@ -6,15 +8,21 @@
     /// <summary>
     /// Interpolate values from source (element values) to target points.
     /// </summary>
-    public void InterpolateToTarget(float[] sourceElementValues, float[] target)
+    public void InterpolateElmtToTarget(float[] sourceElementValues, float[] target)
     {
       // Firstly, interpolate to node values
       _nodeInterpolator.Interpolate(sourceElementValues, _nodeValues);
 
-      for (int i = 0; i < _targets.Count; i++)
+      if (_elmtValueInterpolationType == ElmtValueInterpolationType.NodeValues)
       {
-        InterPData interPData = _targets[i];
-        if (interPData.Element1Index < 0)
+        InterpolateNodeToTarget(_nodeValues, target);
+        return;
+      }
+
+      for (int i = 0; i < _targetsElmtNode.Count; i++)
+      {
+        InterPElmtNodeData interPElmtNodeData = _targetsElmtNode[i];
+        if (interPElmtNodeData.Element1Index < 0)
         {
           // target not included in source
           target[i] = _deleteValueFloat;
@@ -23,29 +31,29 @@
 
         // Do interpolation inside (element-element-node) triangle, 
         // disregarding any delete values.
-        double sourceElementValue = sourceElementValues[interPData.Element1Index];
+        double sourceElementValue = sourceElementValues[interPElmtNodeData.Element1Index];
         if (sourceElementValue != _deleteValue)
         {
-          double value  = sourceElementValue * interPData.Element1Weight;
-          double weight = interPData.Element1Weight;
+          double value  = sourceElementValue * interPElmtNodeData.Element1Weight;
+          double weight = interPElmtNodeData.Element1Weight;
 
           {
-            double otherElmentValue = sourceElementValues[interPData.Element2Index];
+            double otherElmentValue = sourceElementValues[interPElmtNodeData.Element2Index];
             if (otherElmentValue != _deleteValue)
             {
               CircularValueHandler.ToReference(_circularType, ref otherElmentValue, sourceElementValue);
-              value  += otherElmentValue * interPData.Element2Weight;
-              weight += interPData.Element2Weight;
+              value  += otherElmentValue * interPElmtNodeData.Element2Weight;
+              weight += interPElmtNodeData.Element2Weight;
             }
           }
 
           {
-            double nodeValue = _nodeValues[interPData.NodeIndex];
+            double nodeValue = _nodeValues[interPElmtNodeData.NodeIndex];
             if (nodeValue != _deleteValue)
             {
               CircularValueHandler.ToReference(_circularType, ref nodeValue, sourceElementValue);
-              value  += nodeValue * interPData.NodeWeight;
-              weight += interPData.NodeWeight;
+              value  += nodeValue * interPElmtNodeData.NodeWeight;
+              weight += interPElmtNodeData.NodeWeight;
             }
           }
 
@@ -58,6 +66,99 @@
           target[i] = _deleteValueFloat;
         }
       }
+    }
+
+
+    /// <summary>
+    /// Interpolate values from source node values to target points.
+    /// </summary>
+    public void InterpolateNodeToTarget(double[] sourceNodeValues, float[] target)
+    {
+      double           delVal  = DeleteValueFloat;
+      InterpQuadrangle interpQ = new InterpQuadrangle() {DelVal = delVal};
+      InterpTriangle   interpT = new InterpTriangle() { DelVal  = delVal};
+
+      for (int i = 0; i < _targetsNode.Count; i++)
+      {
+        target[i] = (float)InterpolateNodeToTarget(sourceNodeValues, i, interpQ, interpT);
+      }
+    }
+
+    /// <summary>
+    /// Interpolate values from source node values to target points.
+    /// </summary>
+    public void InterpolateNodeToTarget(float[] sourceNodeValues, float[] target)
+    {
+      double           delVal  = DeleteValueFloat;
+      InterpQuadrangle interpQ = new InterpQuadrangle() {DelVal = delVal};
+      InterpTriangle   interpT = new InterpTriangle() { DelVal  = delVal};
+
+      for (int i = 0; i < _targetsNode.Count; i++)
+      {
+        target[i] = (float)InterpolateNodeToTarget(sourceNodeValues, i, interpQ, interpT);
+      }
+    }
+
+    /// <summary>
+    /// Interpolate values from source node values to target points.
+    /// </summary>
+    private double InterpolateNodeToTarget(float[] nodeValues, int i, InterpQuadrangle interpQ, InterpTriangle interpT)
+    {
+      double delVal  = DeleteValueFloat;
+
+      InterPNodeData w = _targetsNode[i];
+      int elmtIndex = w.ElementIndex;
+
+      if (elmtIndex < 0)
+      {
+        // target not included in source
+        return delVal;
+      }
+
+      if (_smesh == null)
+        throw new NotSupportedException("Node interpolation is only supported by SMeshData objects");
+
+      int[] elmtNodes = _smesh.ElementTable[elmtIndex];
+
+      double circReference = delVal;
+      if (_circularType != CircularValueTypes.Normal)
+      {
+        for (int j = 0; j < elmtNodes.Length; j++)
+        {
+          float nodeValue = nodeValues[elmtNodes[j]];
+          if (nodeValue != delVal)
+          {
+            circReference = nodeValue;
+            break;
+          }
+        }
+      }
+
+      double res;
+      if (elmtNodes.Length == 3)
+      {
+        double v1 = CircularValueHandler.ToReference(_circularType, nodeValues[elmtNodes[0]], circReference);
+        double v2 = CircularValueHandler.ToReference(_circularType, nodeValues[elmtNodes[1]], circReference);
+        double v3 = CircularValueHandler.ToReference(_circularType, nodeValues[elmtNodes[2]], circReference);
+
+        res = interpT.GetValue(w.w1, w.w2, w.w3, v1, v2, v3);
+      }
+      else
+      {
+        double v1 = CircularValueHandler.ToReference(_circularType, nodeValues[elmtNodes[0]], circReference);
+        double v2 = CircularValueHandler.ToReference(_circularType, nodeValues[elmtNodes[1]], circReference);
+        double v3 = CircularValueHandler.ToReference(_circularType, nodeValues[elmtNodes[2]], circReference);
+        double v4 = CircularValueHandler.ToReference(_circularType, nodeValues[elmtNodes[3]], circReference);
+
+        res = interpQ.GetValue(w.w1, w.w2, v1, v2, v3, v4);
+      }
+
+      if (res != delVal)
+      {
+        CircularValueHandler.ToCircular(_circularType, ref res);
+      }
+
+      return res;
     }
   }
 }

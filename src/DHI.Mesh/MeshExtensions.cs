@@ -92,7 +92,7 @@ namespace DHI.Mesh
     /// <summary>
     /// Returns true if coordinate (x,y) is inside element
     /// </summary>
-    public static bool Includes(this MeshElement element, double x, double y)
+    public static bool Includes(this MeshElement element, double x, double y, double tolerance = 0)
     {
       bool isQuad = element.IsQuadrilateral();
 
@@ -100,22 +100,21 @@ namespace DHI.Mesh
       if (!isQuad)
       {
         return
-          (LeftOf(x, y, elementNodes[0], elementNodes[1]) >= 0 &&
-           LeftOf(x, y, elementNodes[1], elementNodes[2]) >= 0 &&
-           LeftOf(x, y, elementNodes[2], elementNodes[0]) >= 0);
+          (LeftOf(x, y, elementNodes[0], elementNodes[1]) >= -tolerance &&
+           LeftOf(x, y, elementNodes[1], elementNodes[2]) >= -tolerance &&
+           LeftOf(x, y, elementNodes[2], elementNodes[0]) >= -tolerance);
       }
       return
-        (LeftOf(x, y, elementNodes[0], elementNodes[1]) >= 0 &&
-         LeftOf(x, y, elementNodes[1], elementNodes[2]) >= 0 &&
-         LeftOf(x, y, elementNodes[2], elementNodes[3]) >= 0 &&
-         LeftOf(x, y, elementNodes[3], elementNodes[0]) >= 0);
-
+        (LeftOf(x, y, elementNodes[0], elementNodes[1]) >= -tolerance &&
+         LeftOf(x, y, elementNodes[1], elementNodes[2]) >= -tolerance &&
+         LeftOf(x, y, elementNodes[2], elementNodes[3]) >= -tolerance &&
+         LeftOf(x, y, elementNodes[3], elementNodes[0]) >= -tolerance);
     }
 
     /// <summary>
     /// Returns true if coordinate (x,y) is inside element
     /// </summary>
-    public static bool Includes(this SMeshData mesh, int element, double x, double y)
+    public static bool Includes(this SMeshData mesh, int element, double x, double y, double tolerance = 0)
     {
       bool isQuad = mesh.IsQuadrilateral(element);
 
@@ -123,15 +122,15 @@ namespace DHI.Mesh
       if (!isQuad)
       {
         return
-          (LeftOf(x, y, mesh.X[nodes[0]], mesh.Y[nodes[0]], mesh.X[nodes[1]], mesh.Y[nodes[1]] ) >= 0 &&
-           LeftOf(x, y, mesh.X[nodes[1]], mesh.Y[nodes[1]], mesh.X[nodes[2]], mesh.Y[nodes[2]] ) >= 0 &&
-           LeftOf(x, y, mesh.X[nodes[2]], mesh.Y[nodes[2]], mesh.X[nodes[0]], mesh.Y[nodes[0]] ) >= 0);
+          (LeftOf(x, y, mesh.X[nodes[0]], mesh.Y[nodes[0]], mesh.X[nodes[1]], mesh.Y[nodes[1]]) >= -tolerance &&
+           LeftOf(x, y, mesh.X[nodes[1]], mesh.Y[nodes[1]], mesh.X[nodes[2]], mesh.Y[nodes[2]]) >= -tolerance &&
+           LeftOf(x, y, mesh.X[nodes[2]], mesh.Y[nodes[2]], mesh.X[nodes[0]], mesh.Y[nodes[0]]) >= -tolerance);
       }
       return
-        (LeftOf(x, y, mesh.X[nodes[0]], mesh.Y[nodes[0]], mesh.X[nodes[1]], mesh.Y[nodes[1]]) >= 0 &&
-         LeftOf(x, y, mesh.X[nodes[1]], mesh.Y[nodes[1]], mesh.X[nodes[2]], mesh.Y[nodes[2]]) >= 0 &&
-         LeftOf(x, y, mesh.X[nodes[2]], mesh.Y[nodes[2]], mesh.X[nodes[3]], mesh.Y[nodes[3]]) >= 0 &&
-         LeftOf(x, y, mesh.X[nodes[3]], mesh.Y[nodes[3]], mesh.X[nodes[0]], mesh.Y[nodes[0]]) >= 0);
+        (LeftOf(x, y, mesh.X[nodes[0]], mesh.Y[nodes[0]], mesh.X[nodes[1]], mesh.Y[nodes[1]]) >= -tolerance &&
+         LeftOf(x, y, mesh.X[nodes[1]], mesh.Y[nodes[1]], mesh.X[nodes[2]], mesh.Y[nodes[2]]) >= -tolerance &&
+         LeftOf(x, y, mesh.X[nodes[2]], mesh.Y[nodes[2]], mesh.X[nodes[3]], mesh.Y[nodes[3]]) >= -tolerance &&
+         LeftOf(x, y, mesh.X[nodes[3]], mesh.Y[nodes[3]], mesh.X[nodes[0]], mesh.Y[nodes[0]]) >= -tolerance);
 
     }
 
@@ -146,6 +145,16 @@ namespace DHI.Mesh
     }
 
     /// <summary>
+    /// Returns true if point is inside triangle limited by the points (t1, t2, t3)
+    /// </summary>
+    public static bool IsPointInsideTriangle(double x, double y, double t1x, double t1y, double t2x, double t2y, double t3x, double t3y, double tolerance)
+    {
+      return (LeftDistance(x, y, t1x, t1y, t2x, t2y) >= -tolerance &&
+              LeftDistance(x, y, t2x, t2y, t3x, t3y) >= -tolerance &&
+              LeftDistance(x, y, t3x, t3y, t1x, t1y) >= -tolerance);
+    }
+
+    /// <summary>
     /// Returns true if point is inside quadrangle limited by the points (t0, t1, t2, t3)
     /// </summary>
     public static bool IsPointInsideQuadrangle(double x, double y, double t0x, double t0y, double t1x, double t1y, double t2x, double t2y, double t3x, double t3y)
@@ -154,6 +163,17 @@ namespace DHI.Mesh
               LeftOf(x, y, t1x, t1y, t2x, t2y) >= 0 &&
               LeftOf(x, y, t2x, t2y, t3x, t3y) >= 0 &&
               LeftOf(x, y, t3x, t3y, t0x, t0y) >= 0);
+    }
+
+    /// <summary>
+    /// Returns true if point is inside quadrangle limited by the points (t0, t1, t2, t3)
+    /// </summary>
+    public static bool IsPointInsideQuadrangle(double x, double y, double t0x, double t0y, double t1x, double t1y, double t2x, double t2y, double t3x, double t3y, double tolerance)
+    {
+      return (LeftDistance(x, y, t0x, t0y, t1x, t1y) >= -tolerance &&
+              LeftDistance(x, y, t1x, t1y, t2x, t2y) >= -tolerance &&
+              LeftDistance(x, y, t2x, t2y, t3x, t3y) >= -tolerance &&
+              LeftDistance(x, y, t3x, t3y, t0x, t0y) >= -tolerance);
     }
 
     /// <summary>
@@ -180,7 +200,7 @@ namespace DHI.Mesh
     }
 
     /// <summary>
-    /// Returns true if the point (x,y) is left-of the line from point (l1) to (l2)
+    /// Returns a positive number if the point (x,y) is left-of the line from point (l1) to (l2)
     /// </summary>
     private static double LeftOf(double x, double y, double l1X, double l1Y, double l2X, double l2Y)
     {
@@ -189,7 +209,23 @@ namespace DHI.Mesh
       double vy = l2Y - l1Y;
       // Left perpendicular vector is (-vy, vx)
       // Dot product between Left perpendicular and vector from l1 to (x,y)
-      return -(x - l1X) * vy + (y - l1Y) * vx;
+      return (-(x - l1X) * vy + (y - l1Y) * vx);
+    }
+
+    /// <summary>
+    /// Returns distance with sign between (x,y) and the line (l1,l2). Distance is positive to the left.
+    /// </summary>
+    private static double LeftDistance(double x, double y, double l1X, double l1Y, double l2X, double l2Y)
+    {
+      // Line vector from l1 to l2
+      double vx = l2X - l1X;
+      double vy = l2Y - l1Y;
+      // Length of line vector
+      double l  = Math.Sqrt(vx * vx + vy * vy);
+
+      // Left perpendicular vector is (-vy, vx)
+      // Dot product between Left perpendicular and vector from l1 to (x,y)
+      return (-(x - l1X) * vy + (y - l1Y) * vx) / l;
     }
 
     /// <summary>
@@ -281,7 +317,7 @@ namespace DHI.Mesh
 
 
     /// <summary>
-    /// Convert a <see cref="MeshFile"/> class into a <see cref="MeshData"/> class.
+    /// Convert a <see cref="MeshData"/> class into a <see cref="MeshFile"/> class.
     /// </summary>
     public static MeshFile ToMeshFile(this MeshData meshData)
     {
@@ -327,6 +363,23 @@ namespace DHI.Mesh
 
       MeshFile meshFile = builder.CreateMesh();
       return meshFile;
+    }
+
+    /// <summary>
+    /// Convert a <see cref="SMeshData"/> class into a <see cref="MeshFile"/> class.
+    /// </summary>
+    public static MeshFile ToMeshFile(this SMeshData meshData)
+    {
+      return MeshFile.Create(
+        meshData.ZUnit,
+        meshData.Projection,
+        meshData.NodeIds,
+        meshData.X,
+        meshData.Y, meshData.Z,
+        meshData.Code,
+        meshData.ElementIds,
+        meshData.ElementType,
+        meshData.ElementTable);
     }
 
 

@@ -52,6 +52,32 @@ namespace DHI.Mesh
     }
 
     /// <summary>
+    /// Make <paramref name="sourceValue"/> sufficiently close to <paramref name="refValue"/>
+    /// in order to interpolate on angular values.
+    /// </summary>
+    public static double ToReference(CircularValueTypes circularType, double sourceValue, double refValue)
+    {
+      switch (circularType)
+      {
+        case CircularValueTypes.RadiansPi:
+        case CircularValueTypes.Radians2Pi:
+          if      (sourceValue - refValue >  Math.PI)
+            return sourceValue - 2 * Math.PI;
+          else if (sourceValue - refValue < -Math.PI)
+            return sourceValue + 2 * Math.PI;
+          break;
+        case CircularValueTypes.Degrees180:
+        case CircularValueTypes.Degrees360:
+          if      (sourceValue - refValue >  180.0)
+            return sourceValue - 360.0;
+          else if (sourceValue - refValue < -180.0)
+            return sourceValue + 360.0;
+          break;
+      }
+      return sourceValue;
+    }
+
+    /// <summary>
     /// Make <paramref name="value"/> within limits of circular value.
     /// </summary>
     public static void ToCircular(CircularValueTypes circularType, ref double value)

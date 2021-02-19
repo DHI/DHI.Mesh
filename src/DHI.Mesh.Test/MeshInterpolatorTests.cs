@@ -7,6 +7,74 @@ namespace DHI.Mesh.Test
   [TestFixture]
   public class MeshInterpolatorTests
   {
+
+    /// <summary>
+    /// Example of how to interpolate from element center values
+    /// to arbitrary target values, specified as (x,y) target points.
+    /// </summary>
+    [Test]
+    public void InterpolateToXYExample()
+    {
+      InterpolateToXYExample(false);
+      InterpolateToXYExample(true);
+    }
+
+    public void InterpolateToXYExample(bool nodeInterp)
+    {
+      // Source mesh
+      string   triMesh  = UnitTestHelper.TestDataDir + "small.mesh";
+      MeshFile meshFile = MeshFile.ReadMesh(triMesh);
+      SMeshData mesh     = meshFile.ToSMeshData();
+      // Build derived data, required for the interpolation routines
+      mesh.BuildDerivedData();
+
+      // Create element center Z values array
+      double[] elmtCenterZ = new double[meshFile.NumberOfElements];
+      Array.Copy(mesh.ElementZCenter, elmtCenterZ, mesh.NumberOfElements);
+      // Make a strong peak at element 5 - in the center of the mesh
+      elmtCenterZ[4] = -6;
+
+      // Set up so source can be both element values and node values
+      MeshValueType sourceType = MeshValueType.Elements | MeshValueType.Nodes;
+
+      // Mesh interpolator
+      MeshInterpolator2D interpolator = new MeshInterpolator2D(mesh, sourceType);
+      if (nodeInterp)
+        // Simpler interpolation type
+        interpolator.ElementValueInterpolationType = MeshInterpolator2D.ElmtValueInterpolationType.NodeValues;
+
+      // Target coordinates to interpolate values to
+      interpolator.SetTargetSize(mesh.NumberOfElements+1);
+      interpolator.AddTarget(0.7833, 0.531); // Target at (almost) center of element 5
+      for (int i = 0; i < mesh.NumberOfElements; i++)
+        interpolator.AddTarget(mesh.ElementXCenter[i], mesh.ElementYCenter[i]);
+
+      // Array to interpolate values to
+      double[] targetValues = new double[mesh.NumberOfElements+1];
+
+      // When element+node values are used, close to peak value of 6
+      interpolator.InterpolateElmtToTarget(elmtCenterZ, targetValues);
+      if (!nodeInterp)
+      {
+        Assert.AreEqual(-5.999,  targetValues[0], 1e-3);
+        Assert.AreEqual(-3.8225, targetValues[1], 1e-3);
+        for (int i = 0; i < mesh.NumberOfElements; i++)
+          Assert.AreEqual(elmtCenterZ[i], targetValues[i+1]);
+      }
+      else // Using only node interpolation, the value is cut off
+      {
+        Assert.AreEqual(-3.543, targetValues[0], 1e-3);
+        Assert.AreEqual(-3.649, targetValues[1], 1e-3);
+      }
+
+      // Interpolating in node Z values, matching to box center value of element.
+      interpolator.InterpolateNodeToTarget(mesh.Z, targetValues);
+      Assert.AreEqual(-4.376, targetValues[0], 1e-3);
+      Assert.AreEqual(-4.376, mesh.ElementZCenter[4], 1e-3);
+
+    }
+
+
     /// <summary>
     /// Example of how to interpolate from element center values
     /// to arbitrary target values, specified as (x,y) target points.
@@ -29,7 +97,7 @@ namespace DHI.Mesh.Test
       }
 
       // Mesh interpolator
-      MeshInterpolator2D interpolator = new MeshInterpolator2D(mesh);
+      MeshInterpolator2D interpolator = new MeshInterpolator2D(mesh, MeshValueType.Elements);
 
       // Coordinates to interpolate values to
       interpolator.SetTargetSize(3);
@@ -41,7 +109,7 @@ namespace DHI.Mesh.Test
       double[] targetValues = new double[3];
 
       // Interpolate element values to target values
-      interpolator.InterpolateToTarget(sourceValues, targetValues);
+      interpolator.InterpolateElmtToTarget(sourceValues, targetValues);
 
       // Test that values are really 2*x+y
       Assert.AreEqual(2*216600 + 6159900, targetValues[0], 1e-6);
@@ -49,6 +117,32 @@ namespace DHI.Mesh.Test
       Assert.AreEqual(2*216700 + 6160000, targetValues[2], 1e-6);
     }
 
+    [Test]
+    public void InterpolateNodeTest()
+    {
+      string triMesh  = UnitTestHelper.TestDataDir + "odense_rough.mesh";
+      string quadMesh = UnitTestHelper.TestDataDir + "odense_rough_quads.mesh";
+      // Source mesh
+      MeshFile sourcemeshFile = MeshFile.ReadMesh(triMesh);
+      SMeshData sourcemesh    = sourcemeshFile.ToSMeshData();
+      sourcemesh.BuildDerivedData();
+      // Target mesh
+      MeshFile targetMeshFile = MeshFile.ReadMesh(quadMesh);
+      SMeshData targetmesh    = targetMeshFile.ToSMeshData();
+      targetmesh.BuildDerivedData();
+
+      MeshInterpolator2D interpolator = new MeshInterpolator2D(sourcemesh, MeshValueType.Nodes);
+      interpolator.SetTarget(targetmesh, MeshValueType.Nodes);
+
+      double[] target = new double[targetmesh.NumberOfNodes];
+      interpolator.InterpolateNodeToTarget(sourcemesh.Z, target);
+
+      Assert.False(target.Any(vv => vv == interpolator.DeleteValue));
+
+      targetMeshFile.Z = target;
+      targetMeshFile.Write(UnitTestHelper.TestDataDir + "test_odense_rough_quads-fromTri.mesh");
+
+    }
 
     /// <summary>
     /// Tests that interpolation from element center values to to node values is
@@ -56,25 +150,25 @@ namespace DHI.Mesh.Test
     /// and checking that values are exactly interpolated to nodes.
     /// </summary>
     [Test]
-    public void NodeInterpolationAccuracyTest()
+    public void InterpolateElmtToNodeAccuracyTest()
     {
       System.Threading.Thread.CurrentThread.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
 
       string triMesh  = UnitTestHelper.TestDataDir + "odense_rough.mesh";
       string quadMesh = UnitTestHelper.TestDataDir + "odense_rough_quads.mesh";
-      NodeInterpolationAccuracyTest(triMesh,  CircularValueTypes.Normal);
-      NodeInterpolationAccuracyTest(quadMesh, CircularValueTypes.Normal);
-      NodeInterpolationAccuracyTest(triMesh,  CircularValueTypes.Degrees180);
-      NodeInterpolationAccuracyTest(quadMesh, CircularValueTypes.Degrees180);
-      NodeInterpolationAccuracyTest(triMesh,  CircularValueTypes.Degrees360);
-      NodeInterpolationAccuracyTest(quadMesh, CircularValueTypes.Degrees360);
-      NodeInterpolationAccuracyTest(triMesh,  CircularValueTypes.RadiansPi);
-      NodeInterpolationAccuracyTest(quadMesh, CircularValueTypes.RadiansPi);
-      NodeInterpolationAccuracyTest(triMesh,  CircularValueTypes.Radians2Pi);
-      NodeInterpolationAccuracyTest(quadMesh, CircularValueTypes.Radians2Pi);
+      InterpolateElmtToNodeAccuracyTest(triMesh,  CircularValueTypes.Normal);
+      InterpolateElmtToNodeAccuracyTest(quadMesh, CircularValueTypes.Normal);
+      InterpolateElmtToNodeAccuracyTest(triMesh,  CircularValueTypes.Degrees180);
+      InterpolateElmtToNodeAccuracyTest(quadMesh, CircularValueTypes.Degrees180);
+      InterpolateElmtToNodeAccuracyTest(triMesh,  CircularValueTypes.Degrees360);
+      InterpolateElmtToNodeAccuracyTest(quadMesh, CircularValueTypes.Degrees360);
+      InterpolateElmtToNodeAccuracyTest(triMesh,  CircularValueTypes.RadiansPi);
+      InterpolateElmtToNodeAccuracyTest(quadMesh, CircularValueTypes.RadiansPi);
+      InterpolateElmtToNodeAccuracyTest(triMesh,  CircularValueTypes.Radians2Pi);
+      InterpolateElmtToNodeAccuracyTest(quadMesh, CircularValueTypes.Radians2Pi);
     }
 
-    public void NodeInterpolationAccuracyTest(string meshFileName, CircularValueTypes cvt = CircularValueTypes.Normal)
+    public void InterpolateElmtToNodeAccuracyTest(string meshFileName, CircularValueTypes cvt = CircularValueTypes.Normal)
     {
       // Source mesh
       MeshFile meshFile = MeshFile.ReadMesh(meshFileName);
@@ -136,25 +230,25 @@ namespace DHI.Mesh.Test
     /// and checking that values are exactly interpolated to those points.
     /// </summary>
     [Test]
-    public void InterpolationAccuracyTest()
+    public void InterpolationElmtAccuracyTest()
     {
       System.Threading.Thread.CurrentThread.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
 
       string triMesh = UnitTestHelper.TestDataDir + "odense_rough.mesh";
       string quadMesh = UnitTestHelper.TestDataDir + "odense_rough_quads.mesh";
-      InterpolationAccuracyTest(triMesh,  quadMesh, CircularValueTypes.Normal);
-      InterpolationAccuracyTest(quadMesh, triMesh,  CircularValueTypes.Normal);
-      InterpolationAccuracyTest(triMesh,  quadMesh, CircularValueTypes.Degrees180);
-      InterpolationAccuracyTest(quadMesh, triMesh,  CircularValueTypes.Degrees180);
-      InterpolationAccuracyTest(triMesh,  quadMesh, CircularValueTypes.Degrees360);
-      InterpolationAccuracyTest(quadMesh, triMesh,  CircularValueTypes.Degrees360);
-      InterpolationAccuracyTest(triMesh,  quadMesh, CircularValueTypes.RadiansPi);
-      InterpolationAccuracyTest(quadMesh, triMesh,  CircularValueTypes.RadiansPi);
-      InterpolationAccuracyTest(triMesh,  quadMesh, CircularValueTypes.Radians2Pi);
-      InterpolationAccuracyTest(quadMesh, triMesh,  CircularValueTypes.Radians2Pi);
+      InterpolationElmtAccuracyTest(triMesh,  quadMesh, CircularValueTypes.Normal);
+      InterpolationElmtAccuracyTest(quadMesh, triMesh,  CircularValueTypes.Normal);
+      InterpolationElmtAccuracyTest(triMesh,  quadMesh, CircularValueTypes.Degrees180);
+      InterpolationElmtAccuracyTest(quadMesh, triMesh,  CircularValueTypes.Degrees180);
+      InterpolationElmtAccuracyTest(triMesh,  quadMesh, CircularValueTypes.Degrees360);
+      InterpolationElmtAccuracyTest(quadMesh, triMesh,  CircularValueTypes.Degrees360);
+      InterpolationElmtAccuracyTest(triMesh,  quadMesh, CircularValueTypes.RadiansPi);
+      InterpolationElmtAccuracyTest(quadMesh, triMesh,  CircularValueTypes.RadiansPi);
+      InterpolationElmtAccuracyTest(triMesh,  quadMesh, CircularValueTypes.Radians2Pi);
+      InterpolationElmtAccuracyTest(quadMesh, triMesh,  CircularValueTypes.Radians2Pi);
     }
 
-    public void InterpolationAccuracyTest(string sourceMeshFileName, string targetMeshFileName, CircularValueTypes cvt = CircularValueTypes.Normal, int[] elmtsToSkipCompare = null)
+    public void InterpolationElmtAccuracyTest(string sourceMeshFileName, string targetMeshFileName, CircularValueTypes cvt = CircularValueTypes.Normal, int[] elmtsToSkipCompare = null)
     {
       // Source mesh
       MeshFile meshFile = MeshFile.ReadMesh(sourceMeshFileName);
@@ -166,9 +260,9 @@ namespace DHI.Mesh.Test
       MeshData targetmesh = targetFile.ToMeshData();
 
       // Setup interpolator
-      MeshInterpolator2D interpolator = new MeshInterpolator2D(mesh) { CircularType = cvt, AllowExtrapolation = true };
-      interpolator.SetupNodeInterpolation();
-      interpolator.SetTarget(targetmesh);
+      MeshInterpolator2D interpolator = new MeshInterpolator2D(mesh, MeshValueType.Elements) { CircularType = cvt, AllowExtrapolation = true };
+      interpolator.SetupElmtToNodeInterpolation();
+      interpolator.SetTarget(targetmesh, MeshValueType.Elements);
 
       // Find reference x and y value as the smallest x and y value
       double xMin = mesh.Nodes.Select(mn => mn.X).Min();
@@ -192,7 +286,7 @@ namespace DHI.Mesh.Test
 
       // Interpolate to nodes
       double[] targetValues = new double[targetmesh.Elements.Count];
-      interpolator.InterpolateToTarget(elmtVals, targetValues);
+      interpolator.InterpolateElmtToTarget(elmtVals, targetValues);
 
       // Check node values
       bool ok = true;
@@ -253,5 +347,6 @@ namespace DHI.Mesh.Test
 
       return function;
     }
+
   }
 }

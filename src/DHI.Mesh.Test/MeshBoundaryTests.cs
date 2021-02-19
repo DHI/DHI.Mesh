@@ -69,6 +69,7 @@ namespace DHI.Mesh.Test
 
 
     [Test]
+    [Ignore("Run Manual")]
     public void BoundaryListMeshMediumDfsuTest()
     {
       string triMesh = @"C:\Work\DHIGitHub\DHI.Mesh\TestData\MaxWD-PostDev.dfsu";
@@ -77,6 +78,7 @@ namespace DHI.Mesh.Test
     }
 
     [Test]
+    [Ignore("Run Manual")]
     public void BoundaryListSMeshMediumDfsuTest()
     {
       string triMesh = @"C:\Work\DHIGitHub\DHI.Mesh\TestData\MaxWD-PostDev.dfsu";
@@ -85,6 +87,7 @@ namespace DHI.Mesh.Test
     }
 
     [Test]
+    [Ignore("Run Manual")]
     public void BoundaryListMeshBigDfsuTest()
     {
       string triMesh = @"C:\Work\TestData\BigDfsu.dfsu";
@@ -93,6 +96,7 @@ namespace DHI.Mesh.Test
     }
 
     [Test]
+    [Ignore("Run Manual")]
     public void BoundaryListSMeshBigDfsuTest()
     {
       string triMesh = @"C:\Work\TestData\BigDfsu.dfsu";
@@ -218,6 +222,8 @@ namespace DHI.Mesh.Test
       Polygon boundaryPoly = boundaryGeom as Polygon;
       Assert.AreEqual(1, boundaryPoly.Holes.Length);
     }
+
+    [Ignore("Run Manual")]
     [Test]
     public void BoundaryPolygonMeshDfsuBigTest()
     {
@@ -226,6 +232,7 @@ namespace DHI.Mesh.Test
       BoundaryPolygonMeshTest(triMesh);
     }
     [Test]
+    [Ignore("Run Manual")]
     public void BoundaryPolygonMeshDfsuMediumTest()
     {
       string triMesh = @"C:\Work\DHIGitHub\DHI.Mesh\TestData\MaxWD-PostDev.dfsu";
@@ -245,6 +252,7 @@ namespace DHI.Mesh.Test
       Assert.AreEqual(1, boundaryPoly.Holes.Length);
     }
     [Test]
+    [Ignore("Run Manual")]
     public void BoundaryPolygonSMeshDfsuBigTest()
     {
       string triMesh = @"C:\Work\TestData\BigDfsu.dfsu";
@@ -252,6 +260,7 @@ namespace DHI.Mesh.Test
       BoundaryPolygonSMeshTest(triMesh);
     }
     [Test]
+    [Ignore("Run Manual")]
     public void BoundaryPolygonSMeshDfsuMediumTest()
     {
       string triMesh = @"C:\Work\DHIGitHub\DHI.Mesh\TestData\MaxWD-PostDev.dfsu";

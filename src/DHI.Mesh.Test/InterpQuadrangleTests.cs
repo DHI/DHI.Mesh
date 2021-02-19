@@ -1,9 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using DHI.Generic.MikeZero;
 using DHI.Generic.MikeZero.DFS;
 using DHI.Generic.MikeZero.DFS.dfs123;
@@ -14,8 +9,44 @@ namespace DHI.Mesh.Test
   [TestFixture]
   public class InterpQuadrangleTests
   {
+    /// <summary> Delete value </summary>
     static double d = 1e-35;
 
+    /// <summary>
+    /// First test, showing usage of <see cref="InterpQuadrangle"/>
+    /// </summary>
+    [Test]
+    public void FirstTest()
+    {
+
+      double x0 = 0.0;
+      double x1 = 10.0;
+      double x2 = 8.0;
+      double x3 = 2.0;
+      double y0 = 0.0;
+      double y1 = 1.0;
+      double y2 = 8.0;
+      double y3 = 9.0;
+      double z0 = -10.0;
+      double z1 = -7.0;
+      double z2 = -8.0;
+      double z3 = -12.0;
+
+      double x = 5.0;
+      double y = 5.0;
+
+      InterpQuadrangle         interpolator = new InterpQuadrangle() { DelVal = d };
+      InterpQuadrangle.Weights weights = InterpQuadrangle.InterpolationWeights(x, y, x0, y0, x1, y1, x2, y2, x3, y3);
+
+      double value = interpolator.GetValue(weights, z0, z1, z2, z3);
+      Assert.AreEqual(-9.34375, value);
+
+    }
+
+
+    /// <summary>
+    /// Testing that interpolation produces delete values correctly.
+    /// </summary>
     [Test]
     public void DeleteValueTests()
     {
@@ -149,7 +180,20 @@ namespace DHI.Mesh.Test
       }
     }
 
+    void DeleteValueTest(bool valOk, double x, double y, double z0, double z1, double z2, double z3, bool sdc = true)
+    {
+      InterpQuadrangle         interpolator = new InterpQuadrangle() { DelVal = d, SmoothDeleteChop = sdc };
+      InterpQuadrangle.Weights weights      = InterpQuadrangle.InterpolationWeights(x, y, 0, 0, 10, 0, 10, 10, 0, 10);
+      double                   val          = interpolator.GetValue(weights, z0, z1, z2, z3);
+      if (valOk)
+        Assert.AreNotEqual(d, val);
+      else
+        Assert.AreEqual(d, val);
+    }
 
+    /// <summary>
+    /// Test data for 3x3 quadrangles
+    /// </summary>
     double[] xcoords = new[]
     {
       10, 11.0, 17.0, 20.0,
@@ -174,6 +218,9 @@ namespace DHI.Mesh.Test
       11, 11.0,  6,   6,
     };
 
+    /// <summary>
+    /// Indexing from bottom left corner
+    /// </summary>
     public static int ind(int ir, int jr)
     {
       return ir + (3 - jr) * 4;
@@ -187,13 +234,18 @@ namespace DHI.Mesh.Test
     }
 
     [Test]
-    public void VisualDfs2Test()
+    public void DeleteValueVisualDfs2Test()
     {
-      VisualDfs2Test(true);
-      VisualDfs2Test(false);
+      DeleteVAlueVisualDfs2Test(true);
+      DeleteVAlueVisualDfs2Test(false);
     }
 
-    public void VisualDfs2Test(bool centerOnly)
+    /// <summary>
+    /// Create DFS2 file with iterpolated values from the 3x3 quadrangles,
+    /// with various delete values applied in each time step.
+    /// </summary>
+    /// <param name="centerOnly">Only use center quadrangle</param>
+    public void DeleteVAlueVisualDfs2Test(bool centerOnly)
     {
 
       DfsFactory  factory     = new DfsFactory();
@@ -209,12 +261,13 @@ namespace DHI.Mesh.Test
       dfs2Builder.DeleteValueFloat = (float) d;
 
       if (centerOnly)
-        dfs2Builder.CreateFile(@"QuadInterpTestC.dfs2");
+        dfs2Builder.CreateFile(UnitTestHelper.TestDataDir + "test_InterpQuadCenter.dfs2");
       else
-        dfs2Builder.CreateFile(@"QuadInterpTestA.dfs2");
+        dfs2Builder.CreateFile(UnitTestHelper.TestDataDir + "test_InterpQuad.dfs2");
 
       Dfs2File dfs2File = dfs2Builder.GetFile();
 
+      // Calculate interpolation weights
       QuadWeights[][] weights = new QuadWeights[200][];
       for (int j = 0; j < 200; j++)
       {
@@ -251,6 +304,7 @@ namespace DHI.Mesh.Test
         }
       }
 
+      // Original center quadrangle values
       double  z0   = zcoords[ind(1  ,1  )];
       double  z1   = zcoords[ind(1+1,1  )];
       double  z2   = zcoords[ind(1+1,1+1)];
@@ -308,8 +362,9 @@ namespace DHI.Mesh.Test
       InterpQuadrangle interpolator = new InterpQuadrangle();
       interpolator.DelVal           = d;
       interpolator.SmoothDeleteChop = sdc;
-      interpolator.DelLinearInterp  = true;
 
+      // Replace original quadrangle values for the 4 center nodes with new, 
+      // where now some are delete values
       double[] vcoords = new double[zcoords.Length];
       Array.Copy(zcoords, vcoords, zcoords.Length);
       vcoords[ind(1  ,1  )] = v0;
@@ -350,44 +405,6 @@ namespace DHI.Mesh.Test
       Assert.AreEqual(y * 0.1, interp.dy, 1e-12);
     }
 
-    void DeleteValueTest(bool valOk, double x, double y, double z0, double z1, double z2, double z3, bool sdc = true)
-    {
-      InterpQuadrangle         interpolator = new InterpQuadrangle(){ DelVal = d, SmoothDeleteChop = sdc};
-      InterpQuadrangle.Weights weights      = InterpQuadrangle.InterpolationWeights(x, y, 0, 0, 10, 0, 10, 10, 0, 10);
-      double                   val          = interpolator.GetValue(weights, z0, z1, z2, z3);
-      if (valOk)
-        Assert.AreNotEqual(d, val);
-      else
-        Assert.AreEqual(d, val);
-    }
 
-
-    [Test]
-    public void FirstTest()
-    {
-
-      double x0 =  0.0;
-      double x1 = 10.0;
-      double x2 =  8.0;
-      double x3 =  2.0;
-      double y0 =  0.0;
-      double y1 =  1.0;
-      double y2 =  8.0;
-      double y3 =  9.0;
-      double z0 = -10.0;
-      double z1 =  -7.0;
-      double z2 =  -8.0;
-      double z3 = -12.0;
-
-      double x = 5.0;
-      double y = 5.0;
-
-      InterpQuadrangle interpolator = new InterpQuadrangle() {DelVal = d};
-      InterpQuadrangle.Weights weights = InterpQuadrangle.InterpolationWeights(x, y, x0, y0, x1, y1, x2, y2, x3, y3);
-
-      double value = interpolator.GetValue(weights, z0, z1, z2, z3);
-      Assert.AreEqual(-9.34375, value);
-
-    }
   }
 }

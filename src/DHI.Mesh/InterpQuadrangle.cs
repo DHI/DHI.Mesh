@@ -22,17 +22,14 @@ namespace DHI.Mesh
   /// </code>
   /// Depending on the smooth-delete-chop parameter:
   /// <para>
-  /// When smoothing is enabled:
-  /// When Px is delete value, Dx is delete value area
-  /// When two neighboring Px are delete values, their Cx and Dx are delete value area.
-  /// When two diagonal Px are delete values, all Cx are delete value area.
+  /// When smooth version is enabled:
+  /// - When a single Px is delete value, Dx is delete value area.
+  /// - When two neighboring Px are delete values, their Cx and Dx is delete value area.
+  /// - When two diagonal Px are delete values, their Px and all Cx is delete value area.
   /// </para>
   /// <para>
-  /// When smoothing is disabled:
-  /// When Px is delete value, Dx and Cx is delete value area
-  /// </para>
-  /// <para>
-  /// Selection is inversed when 3 delete values are present.
+  /// When smooth version is disabled:
+  /// - When Px is delete value, Dx and Cx is delete value area.
   /// </para>
   /// </remarks>
   // Code is identical to the MzChart class CMzQuadrangle
@@ -55,9 +52,9 @@ namespace DHI.Mesh
     /// </summary>
     public struct Weights
     {
-      /// <summary> Local quadrangle bilinear x coordinate </summary>
+      /// <summary> Local quadrangle bilinear x coordinate, [0:1] </summary>
       public double dx;
-      /// <summary> Local quadrangle bilinear y coordinate </summary>
+      /// <summary> Local quadrangle bilinear y coordinate, [0:1] </summary>
       public double dy;
 
       /// <summary>
@@ -76,7 +73,7 @@ namespace DHI.Mesh
       /// </summary>
       public bool IsDefined
       {
-        get { return dx > 0; }
+        get { return dx >= 0; }
       }
     }
 
@@ -102,39 +99,39 @@ namespace DHI.Mesh
     /// <returns>Bilinear interpolation weights (dx,dy)</returns>
     /// <param name="x">Point X coordinate</param>
     /// <param name="y">Point Y coordinate</param>
-    /// <param name="t0x">Node 0 X coordinate</param>
     /// <param name="t1x">Node 1 X coordinate</param>
     /// <param name="t2x">Node 2 X coordinate</param>
     /// <param name="t3x">Node 3 X coordinate</param>
-    /// <param name="t0y">Node 0 Y coordinate</param>
+    /// <param name="t4x">Node 4 X coordinate</param>
     /// <param name="t1y">Node 1 Y coordinate</param>
     /// <param name="t2y">Node 2 Y coordinate</param>
     /// <param name="t3y">Node 3 Y coordinate</param>
+    /// <param name="t4y">Node 4 Y coordinate</param>
     // Matching CMzQuadrangle::_Rectify
     public static Weights InterpolationWeights(
       double x,
       double y,
-      double t0x,
-      double t0y,
       double t1x,
       double t1y,
       double t2x,
       double t2y,
       double t3x,
-      double t3y
+      double t3y,
+      double t4x,
+      double t4y
     ) 
     {
       double dx;
       double dy;
 
-      double m_dA1 = t0x;
-      double m_dA2 = t0y;
-      double m_dB1 = t1x - t0x;
-      double m_dB2 = t1y - t0y;
-      double m_dC1 = t3x - t0x;
-      double m_dC2 = t3y - t0y;
-      double m_dD1 = t2x - t1x + t0x - t3x;
-      double m_dD2 = t2y - t1y + t0y - t3y;
+      double m_dA1 = t1x;
+      double m_dA2 = t1y;
+      double m_dB1 = t2x - t1x;
+      double m_dB2 = t2y - t1y;
+      double m_dC1 = t4x - t1x;
+      double m_dC2 = t4y - t1y;
+      double m_dD1 = t3x - t2x + t1x - t4x;
+      double m_dD2 = t3y - t2y + t1y - t4y;
 
       {
         double a = m_dD1 * m_dB2 - m_dD2 * m_dB1;
@@ -181,6 +178,9 @@ namespace DHI.Mesh
             dy = (y - m_dA2 - m_dB2* dx)/(m_dC2 + m_dD2* dx);
         }
       }
+      // Getting rid of rounding errors
+      dx = Math.Min(Math.Max(dx, 0), 1);
+      dy = Math.Min(Math.Max(dy, 0), 1);
       return new Weights(dx, dy);
     }
 
@@ -189,12 +189,12 @@ namespace DHI.Mesh
     /// <summary>
     /// Calculate delete value mask
     /// </summary>
-    /// <param name="T00">Node value 0</param>
-    /// <param name="T10">Node value 1</param>
-    /// <param name="T11">Node value 2</param>
-    /// <param name="T01">Node value 3</param>
+    /// <param name="T00">Node value 1</param>
+    /// <param name="T10">Node value 2</param>
+    /// <param name="T11">Node value 3</param>
+    /// <param name="T01">Node value 4</param>
     // Matching CMzQuadrangle::_CalculateDeleteValueMask
-    public int DeleteValueMask(
+    private int DeleteValueMask(
       double T00,
       double T10,
       double T11,
@@ -219,12 +219,16 @@ namespace DHI.Mesh
 
     /// <summary>
     /// Returns interpolated value based on 4 node values
+    /// <para>
+    /// In case values are one of the circular types in <see cref="CircularValueTypes"/>,
+    /// then the values must first be re-referenced, <see cref="CircularValueHandler"/>.
+    /// </para>
     /// </summary>
     /// <param name="weights">Bilinear interpolation weights</param>
-    /// <param name="T00">Node value 0</param>
-    /// <param name="T10">Node value 1</param>
-    /// <param name="T11">Node value 2</param>
-    /// <param name="T01">Node value 3</param>
+    /// <param name="T00">Node value 1</param>
+    /// <param name="T10">Node value 2</param>
+    /// <param name="T11">Node value 3</param>
+    /// <param name="T01">Node value 4</param>
     /// <returns>Interpolated value</returns>
     // Matching CMzQuadrangle::GetValue
     public double GetValue(
@@ -235,14 +239,42 @@ namespace DHI.Mesh
       double T01
     )
     {
+      double dx = weights.dx;
+      double dy = weights.dy;
+      return GetValue(dx, dy, T00, T10, T11, T01);
+    }
 
-      int deleteValueMask = DeleteValueMask(T00, T10, T11, T01);
+    /// <summary>
+    /// Returns interpolated value based on 4 node values
+    /// <para>
+    /// In case values are one of the circular types in <see cref="CircularValueTypes"/>,
+    /// then the values must first be re-referenced, <see cref="CircularValueHandler"/>.
+    /// </para>
+    /// </summary>
+    /// <param name="dx">Bilinear dx interpolation weights</param>
+    /// <param name="dy">Bilinear dy interpolation weights</param>
+    /// <param name="T00">Node value 1</param>
+    /// <param name="T10">Node value 2</param>
+    /// <param name="T11">Node value 3</param>
+    /// <param name="T01">Node value 4</param>
+    /// <returns>Interpolated value</returns>
+    // Matching CMzQuadrangle::GetValue
+    public double GetValue(
+      double dx, 
+      double dy,
+      double T00,
+      double T10,
+      double T11,
+      double T01
+    )
+    {
+
+
+      int    deleteValueMask = DeleteValueMask(T00, T10, T11, T01);
 
       const double m_xc = 0.5;
       const double m_yc = 0.5;
 
-      double dx = weights.dx;
-      double dy = weights.dy;
 
       double z;
       switch (deleteValueMask)
@@ -349,7 +381,9 @@ namespace DHI.Mesh
           z = DelVal;
           break;
 
-        // Smooth delete value chop
+        //-------------------------
+        // Smooth delete value chop variants
+        // Calculation of z is identical, though the chopping is different
         case 16: // 0: Default
           if ((T00 == T10) && (T00 == T01) && (T00 == T11))
             z = T00;
