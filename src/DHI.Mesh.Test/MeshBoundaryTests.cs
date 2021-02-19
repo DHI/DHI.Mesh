@@ -69,7 +69,7 @@ namespace DHI.Mesh.Test
 
 
     [Test]
-    [Ignore("Run Manual")]
+    [Explicit("Run Manual")]
     public void BoundaryListMeshMediumDfsuTest()
     {
       string triMesh = @"C:\Work\DHIGitHub\DHI.Mesh\TestData\MaxWD-PostDev.dfsu";
@@ -78,7 +78,7 @@ namespace DHI.Mesh.Test
     }
 
     [Test]
-    [Ignore("Run Manual")]
+    [Explicit("Run Manual")]
     public void BoundaryListSMeshMediumDfsuTest()
     {
       string triMesh = @"C:\Work\DHIGitHub\DHI.Mesh\TestData\MaxWD-PostDev.dfsu";
@@ -87,7 +87,7 @@ namespace DHI.Mesh.Test
     }
 
     [Test]
-    [Ignore("Run Manual")]
+    [Explicit("Run Manual")]
     public void BoundaryListMeshBigDfsuTest()
     {
       string triMesh = @"C:\Work\TestData\BigDfsu.dfsu";
@@ -96,7 +96,7 @@ namespace DHI.Mesh.Test
     }
 
     [Test]
-    [Ignore("Run Manual")]
+    [Explicit("Run Manual")]
     public void BoundaryListSMeshBigDfsuTest()
     {
       string triMesh = @"C:\Work\TestData\BigDfsu.dfsu";
@@ -129,7 +129,7 @@ namespace DHI.Mesh.Test
       List<MeshBoundary> boundaries = mesh.BuildBoundaryList();
       timer.ReportAndRestart("Time  ");
 
-      string gpFileName = UnitTestHelper.TestDataDir + fileName+"-bndcode.txt";
+      string gpFileName = UnitTestHelper.TestDataDir + "test_"+fileName+"-bndcode.txt";
       GnuPlotWriteBoundaryList(gpFileName, boundaries);
 
       return boundaries;
@@ -161,7 +161,7 @@ namespace DHI.Mesh.Test
       List<SMeshBoundary> boundaries = mesh.BuildBoundaryList();
       timer.ReportAndRestart("Time  ");
 
-      string gpFileName = UnitTestHelper.TestDataDir + fileName + "-bndscode.txt";
+      string gpFileName = UnitTestHelper.TestDataDir + "test_" + fileName + "-bndscode.txt";
       GnuPlotWriteBoundaryList(mesh, gpFileName, boundaries);
 
       return boundaries;
@@ -223,7 +223,7 @@ namespace DHI.Mesh.Test
       Assert.AreEqual(1, boundaryPoly.Holes.Length);
     }
 
-    [Ignore("Run Manual")]
+    [Explicit("Run Manual")]
     [Test]
     public void BoundaryPolygonMeshDfsuBigTest()
     {
@@ -232,7 +232,7 @@ namespace DHI.Mesh.Test
       BoundaryPolygonMeshTest(triMesh);
     }
     [Test]
-    [Ignore("Run Manual")]
+    [Explicit("Run Manual")]
     public void BoundaryPolygonMeshDfsuMediumTest()
     {
       string triMesh = @"C:\Work\DHIGitHub\DHI.Mesh\TestData\MaxWD-PostDev.dfsu";
@@ -252,7 +252,7 @@ namespace DHI.Mesh.Test
       Assert.AreEqual(1, boundaryPoly.Holes.Length);
     }
     [Test]
-    [Ignore("Run Manual")]
+    [Explicit("Run Manual")]
     public void BoundaryPolygonSMeshDfsuBigTest()
     {
       string triMesh = @"C:\Work\TestData\BigDfsu.dfsu";
@@ -260,7 +260,7 @@ namespace DHI.Mesh.Test
       BoundaryPolygonSMeshTest(triMesh);
     }
     [Test]
-    [Ignore("Run Manual")]
+    [Explicit("Run Manual")]
     public void BoundaryPolygonSMeshDfsuMediumTest()
     {
       string triMesh = @"C:\Work\DHIGitHub\DHI.Mesh\TestData\MaxWD-PostDev.dfsu";
@@ -334,7 +334,7 @@ namespace DHI.Mesh.Test
       var    gjws    = new JsonSerializerSettings() {Formatting = Formatting.Indented};
       var    gjw     = new GeoJsonWriter() {SerializerSettings  = gjws};
       string polystr = gjw.Write(boundaryGeom);
-      File.WriteAllText(UnitTestHelper.TestDataDir + fileName + "-gj" + extra + ".txt", polystr);
+      File.WriteAllText(UnitTestHelper.TestDataDir + "test_" + fileName + "-gj" + extra + ".txt", polystr);
       timer.ReportAndRestart("Write  ");
 
       MultiPolygon boundaryMPoly = boundaryGeom as MultiPolygon;
@@ -342,7 +342,7 @@ namespace DHI.Mesh.Test
       // Write to GnuPlot format
       if (boundaryMPoly != null)
       {
-        StreamWriter writer = new StreamWriter(UnitTestHelper.TestDataDir + fileName + "-gp" + extra + ".txt");
+        StreamWriter writer = new StreamWriter(UnitTestHelper.TestDataDir + "test_" + fileName + "-gp" + extra + ".txt");
         // First write all shells
         foreach (IGeometry geometry in boundaryMPoly.Geometries)
         {
