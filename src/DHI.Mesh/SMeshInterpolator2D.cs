@@ -11,6 +11,9 @@ namespace DHI.Mesh
     {
       _smesh      = sourceMesh;
       _sourceType = sourceType;
+      _ssearcher  = new SMeshSearcher(_smesh);
+      _ssearcher.SetupElementSearch();
+      Init();
     }
 
     /// <summary> Source mesh </summary>
@@ -49,158 +52,162 @@ namespace DHI.Mesh
     /// </summary>
     private void AddSTarget(double x, double y)
     {
-      if (_ssearcher == null)
-      {
-        _ssearcher = new SMeshSearcher(_smesh);
-        _ssearcher.SetupElementSearch();
-      }
-
       // Find element that includes the (x,y) coordinate
       int element = _ssearcher.FindElement(x, y);
 
       // Setup interpolation from node values
       if (NodeValueInterpolation)
       {
-        InterPNodeData interp;
+        InterpNodeData interp;
         if (element >= 0)
         {
           int[] nodes = _smesh.ElementTable[element];
           if (nodes.Length == 3)
           {
-            double x1 = _smesh.X[nodes[0]];
-            double x2 = _smesh.X[nodes[1]];
-            double x3 = _smesh.X[nodes[2]];
-            double y1 = _smesh.Y[nodes[0]];
-            double y2 = _smesh.Y[nodes[1]];
-            double y3 = _smesh.Y[nodes[2]];
-
-            var weights = InterpTriangle.InterpolationWeights(x, y, x1, y1, x2, y2, x3, y3);
-            interp = new InterPNodeData(element, weights.w1, weights.w2, weights.w3);
+            var weights = InterpTriangle.InterpolationWeights(x, y, _smesh, nodes);
+            interp = new InterpNodeData(element, weights.w1, weights.w2, weights.w3);
           }
           else if (nodes.Length == 4)
           {
-            double x1 = _smesh.X[nodes[0]];
-            double x2 = _smesh.X[nodes[1]];
-            double x3 = _smesh.X[nodes[2]];
-            double x4 = _smesh.X[nodes[3]];
-            double y1 = _smesh.Y[nodes[0]];
-            double y2 = _smesh.Y[nodes[1]];
-            double y3 = _smesh.Y[nodes[2]];
-            double y4 = _smesh.Y[nodes[3]];
-
-            var weights = InterpQuadrangle.InterpolationWeights(x, y, x1, y1, x2, y2, x3, y3, x4, y4);
-            interp = new InterPNodeData(element, weights.dx, weights.dy);
+            var weights = InterpQuadrangle.InterpolationWeights(x, y, _smesh, nodes);
+            interp = new InterpNodeData(element, weights.dx, weights.dy);
           }
           else
-          {
-            interp = InterPNodeData.Undefined();
-          }
+            interp = InterpNodeData.Undefined();
         }
         else
-        {
-          interp = InterPNodeData.Undefined();
-        }
+          interp = InterpNodeData.Undefined();
+
         if (_targetsNode == null)
-          _targetsNode = new List<InterPNodeData>();
+          _targetsNode = new List<InterpNodeData>();
         _targetsNode.Add(interp);
       }
 
       // Setup interpolation from element+node values
       if (ElmtNodeValueInterpolation)
       {
-        InterPElmtNodeData interpElmtNodeData = new InterPElmtNodeData();
-        // Setting "out-of-bounds" index
-        interpElmtNodeData.Element1Index = -1;
+        InterpElmtNode.Weights weights;
 
         // Check if element has been found, i.e. includes the (x,y) point
         if (element >= 0)
-        {
-          bool found = false;
-          interpElmtNodeData.Element1Index = element;
+          weights = InterpElmtNode.InterpolationWeights(x, y, element, _smesh);
+        else
+          weights = InterpElmtNode.Undefined();
 
-          // Check which face the point belongs to, and which "side" of the face
-          bool isQuad   = _smesh.IsQuadrilateral(element);
-          int  numFaces = isQuad ? 4 : 3;
-          for (int j = 0; j < numFaces; j++)
-          {
-            SMeshFace elementFace = _smesh.Faces[_smesh.ElementsFaces[element][j]];
-            // From the element (x,y), looking towards the face, 
-            // figure out wich node is right and which is left.
-            int rightNode, leftNode;
-            if (elementFace.LeftElement == element)
-            {
-              rightNode = elementFace.FromNode;
-              leftNode  = elementFace.ToNode;
-            }
-            else
-            {
-              rightNode = elementFace.ToNode;
-              leftNode  = elementFace.FromNode;
-            }
-
-            double elementXCenter = _smesh.ElementXCenter[element];
-            double elementYCenter = _smesh.ElementYCenter[element];
-            double rightNodeX     = _smesh.X[rightNode];
-            double rightNodeY     = _smesh.Y[rightNode];
-            double leftNodeX      = _smesh.X[leftNode];
-            double leftNodeY      = _smesh.Y[leftNode];
-
-            // Find also the element on the other side of the face
-            double otherElementX, otherElementY;
-            int otherElement = elementFace.OtherElement(element);
-            if (otherElement >= 0)
-            {
-              otherElementX = _smesh.ElementXCenter[otherElement];
-              otherElementY = _smesh.ElementYCenter[otherElement];
-              interpElmtNodeData.Element2Index = otherElement;
-            }
-            else
-            {
-              // No other element - boundary face, use center of face.
-              otherElementX = 0.5 * (rightNodeX + leftNodeX);
-              otherElementY = 0.5 * (rightNodeY + leftNodeY);
-              // Use "itself" as element-2
-              interpElmtNodeData.Element2Index = element;
-            }
-
-
-            // Check if point is on the right side of the line between element and other-element
-            if (MeshExtensions.IsPointInsideLines(x, y, elementXCenter, elementYCenter, rightNodeX, rightNodeY, otherElementX, otherElementY))
-            {
-              (double w1, double w2, double w3) = MeshExtensions.InterpolationWeights(x, y, elementXCenter, elementYCenter, rightNodeX, rightNodeY, otherElementX, otherElementY);
-              interpElmtNodeData.NodeIndex = rightNode;
-              interpElmtNodeData.Element1Weight = w1;
-              interpElmtNodeData.NodeWeight     = w2;
-              interpElmtNodeData.Element2Weight = w3;
-              found = true;
-              break;
-            }
-            // Check if point is on the left side of the line between element and other-element
-            if (MeshExtensions.IsPointInsideLines(x, y, elementXCenter, elementYCenter, otherElementX, otherElementY, leftNodeX, leftNodeY))
-            {
-              (double w1, double w2, double w3) = MeshExtensions.InterpolationWeights(x, y, elementXCenter, elementYCenter, otherElementX, otherElementY, leftNodeX, leftNodeY);
-              interpElmtNodeData.NodeIndex = leftNode;
-              interpElmtNodeData.Element1Weight = w1;
-              interpElmtNodeData.Element2Weight = w2;
-              interpElmtNodeData.NodeWeight = w3;
-              found = true;
-              break;
-            }
-          }
-
-          if (!found) // Should never happen, but just in case
-          {
-            interpElmtNodeData.Element1Weight = 1;
-            interpElmtNodeData.Element2Weight = 0;
-            interpElmtNodeData.NodeWeight     = 0;
-            interpElmtNodeData.Element2Index  = element;
-            interpElmtNodeData.NodeIndex      = _smesh.ElementTable[element][0];
-          }
-        }
         if (_targetsElmtNode == null)
-          _targetsElmtNode = new List<InterPElmtNodeData>();
-        _targetsElmtNode.Add(interpElmtNodeData);
+          _targetsElmtNode = new List<InterpElmtNode.Weights>();
+        _targetsElmtNode.Add(weights);
       }
+    }
+
+    /// <summary>
+    /// Interpolate node values to the (x,y) coordinate.
+    /// </summary>
+    /// <param name="x">X coordinate</param>
+    /// <param name="y">Y coordinate</param>
+    /// <param name="nodeValues">Node values</param>
+    public double InterpolateNodeToXY(double x, double y, float[] nodeValues)
+    {
+      // Find element that includes the (x,y) coordinate
+      int element = _ssearcher.FindElement(x, y);
+
+      // Check if element has been found, i.e. includes the (x,y) point
+      if (element >= 0)
+      {
+        int[] nodes = _smesh.ElementTable[element];
+        if (nodes.Length == 3)
+        {
+          var weights = InterpTriangle.InterpolationWeights(x, y, _smesh, nodes);
+          return _interpT.GetValue(weights, nodes, _smesh, nodeValues);
+        }
+        if (nodes.Length == 4)
+        {
+          var weights = InterpQuadrangle.InterpolationWeights(x, y, _smesh, nodes);
+          return _interpQ.GetValue(weights, nodes, _smesh, nodeValues);
+        }
+      }
+      return DeleteValue;
+    }
+
+    /// <summary>
+    /// Interpolate node values to the (x,y) coordinate.
+    /// </summary>
+    /// <param name="x">X coordinate</param>
+    /// <param name="y">Y coordinate</param>
+    /// <param name="nodeValues">Node values</param>
+    public double InterpolateNodeToXY(double x, double y, double[] nodeValues)
+    {
+      // Find element that includes the (x,y) coordinate
+      int element = _ssearcher.FindElement(x, y);
+
+      // Check if element has been found, i.e. includes the (x,y) point
+      if (element >= 0)
+      {
+        int[] nodes = _smesh.ElementTable[element];
+        if (nodes.Length == 3)
+        {
+          var weights = InterpTriangle.InterpolationWeights(x, y, _smesh, nodes);
+          return _interpT.GetValue(weights, nodes, _smesh, nodeValues);
+        }
+        if (nodes.Length == 4)
+        {
+          var weights = InterpQuadrangle.InterpolationWeights(x, y, _smesh, nodes);
+          return _interpQ.GetValue(weights, nodes, _smesh, nodeValues);
+        }
+      }
+      return DeleteValue;
+    }
+
+    /// <summary>
+    /// Interpolate element values to the (x,y) coordinate.
+    /// <para>
+    /// It is required to first calculate node values from
+    /// element center values. Check out <see cref="NodeInterpolator"/>.
+    /// </para>
+    /// </summary>
+    /// <param name="x">X coordinate</param>
+    /// <param name="y">Y coordinate</param>
+    /// <param name="elmtValues">Element center values</param>
+    /// <param name="nodeValues">Node values</param>
+    public double InterpolateElmtToXY(double x, double y, float[] elmtValues, float[] nodeValues)
+    {
+      // Find element that includes the (x,y) coordinate
+      int element = _ssearcher.FindElement(x, y);
+
+      // Check if element has been found, i.e. includes the (x,y) point
+      if (element >= 0)
+      {
+        InterpElmtNode.Weights weights = InterpElmtNode.InterpolationWeights(x, y, element, _smesh);
+        return _interpEN.GetValue(weights, elmtValues, nodeValues);
+      }
+
+      return DeleteValue;
+    }
+
+    /// <summary>
+    /// Interpolate element values to the (x,y) coordinate.
+    /// <para>
+    /// It is required to first calculate node values from
+    /// element center values. Check out <see cref="NodeInterpolator"/>.
+    /// </para>
+    /// </summary>
+    /// <param name="x">X coordinate</param>
+    /// <param name="y">Y coordinate</param>
+    /// <param name="elmtValues">Element center values</param>
+    /// <param name="nodeValues">Node values</param>
+    public double InterpolateElmtToXY(double x, double y, double[] elmtValues, double[] nodeValues)
+    {
+      // Find element that includes the (x,y) coordinate
+      int element = _ssearcher.FindElement(x, y);
+
+      // Check if element has been found, i.e. includes the (x,y) point
+      if (element >= 0)
+      {
+        InterpElmtNode.Weights weights = InterpElmtNode.InterpolationWeights(x, y, element, _smesh);
+        return _interpEN.GetValue(weights, elmtValues, nodeValues);
+      }
+
+      return DeleteValue;
     }
 
   }

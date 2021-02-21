@@ -315,7 +315,12 @@ namespace DHI.Mesh
       return errors;
     }
 
-
+    /// <summary>
+    /// Calculate element center values,
+    /// <see cref="ElementXCenter"/>,
+    /// <see cref="ElementYCenter"/> and
+    /// <see cref="ElementZCenter"/>.
+    /// </summary>
     public void CalcElementCenters()
     {
       if (_elmtXCenter != null)

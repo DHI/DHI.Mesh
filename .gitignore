@@ -5,3 +5,4 @@ bin
 obj
 *csproj.user
 *DotSettings.user
+/TestData/test_*

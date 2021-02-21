@@ -1,11 +1,13 @@
 ﻿
+using System.Collections.Generic;
+
 namespace DHI.Mesh
 {
   /// <summary>
   /// Class holding interpolation weights for a triangle
   /// </summary>
   /// <remarks>
-  /// When calling <see cref="GetValue"/>, delete values are handled as follows:
+  /// When calling the <code>GetValue</code> methods, delete values are handled as follows:
   ///<code>
   ///  P2
   ///    |\.
@@ -21,13 +23,18 @@ namespace DHI.Mesh
   /// - When Px is delete value, Dx is delete value area.
   /// - When two delete values are present, also C is delete value area
   /// </remarks>
-  public struct InterpTriangle
+  public class InterpTriangle
   {
 
     /// <summary>
     /// Delete/undefined value
     /// </summary>
     public double DelVal { get; set; }
+
+    /// <summary>
+    /// Type of value, for interpolation of radians and degrees
+    /// </summary>
+    public CircularValueTypes CircularType { get; set; } = CircularValueTypes.Normal;
 
     /// <summary>
     /// Struct holding triangular interpolation weights
@@ -75,6 +82,55 @@ namespace DHI.Mesh
 
     /// <summary>
     /// Calculate interpolation weights for the point (x,y) inside the triangle defined by
+    /// the nodes in <paramref name="elmtNodes"/>.
+    ///<para>
+    /// Check
+    /// <see cref="InterpolationWeights(double,double,double,double,double,double,double,double)"/>
+    /// for details.
+    /// </para>
+    /// </summary>
+    /// <param name="x">Point X coordinate</param>
+    /// <param name="y">Point Y coordinate</param>
+    /// <param name="smesh">MeshData object</param>
+    /// <param name="elmtNodes">Nodes in element</param>
+    /// <returns>Interpolation weights (w1,w2,w3)</returns>
+    public static Weights InterpolationWeights(double x, double y, SMeshData smesh, int[] elmtNodes)
+    {
+      double x1 = smesh.X[elmtNodes[0]];
+      double x2 = smesh.X[elmtNodes[1]];
+      double x3 = smesh.X[elmtNodes[2]];
+      double y1 = smesh.Y[elmtNodes[0]];
+      double y2 = smesh.Y[elmtNodes[1]];
+      double y3 = smesh.Y[elmtNodes[2]];
+      return InterpTriangle.InterpolationWeights(x, y, x1, y1, x2, y2, x3, y3);
+    }
+
+    /// <summary>
+    /// Calculate interpolation weights for the point (x,y) inside the triangle defined by
+    /// the nodes in <paramref name="elmtNodes"/>.
+    ///<para>
+    /// Check
+    /// <see cref="InterpolationWeights(double,double,double,double,double,double,double,double)"/>
+    /// for details.
+    /// </para>
+    /// </summary>
+    /// <param name="x">Point X coordinate</param>
+    /// <param name="y">Point Y coordinate</param>
+    /// <param name="elmtNodes">Nodes in element</param>
+    /// <returns>Interpolation weights (w1,w2,w3)</returns>
+    public static Weights InterpolationWeights(double x, double y, IList<MeshNode> elmtNodes)
+    {
+      double x1 = elmtNodes[0].X;
+      double x2 = elmtNodes[1].X;
+      double x3 = elmtNodes[2].X;
+      double y1 = elmtNodes[0].Y;
+      double y2 = elmtNodes[1].Y;
+      double y3 = elmtNodes[2].Y;
+      return InterpTriangle.InterpolationWeights(x, y, x1, y1, x2, y2, x3, y3);
+    }
+
+    /// <summary>
+    /// Calculate interpolation weights for the point (x,y) inside the triangle defined by
     /// the three points (t1,t2,t3).
     /// <para>
     /// The weights (w1, w2, w3) returned can be used to calculate a value v at the point (x,y)
@@ -108,6 +164,56 @@ namespace DHI.Mesh
       return new Weights(w1, w2, w3);
     }
 
+
+    /// <summary>
+    /// Returns interpolated value based on 3 node values
+    /// <para>
+    /// In case values are one of the circular types in <see cref="CircularValueTypes"/>,
+    /// then the values must first be re-referenced, <see cref="CircularValueHandler"/>.
+    /// </para>
+    /// </summary>
+    /// <param name="weights">Triangular interpolation weights</param>
+    /// <param name="elmtNodes">Nodes in element</param>
+    /// <param name="smesh">Mesh data object</param>
+    /// <param name="nodeValues">Node values</param>
+    /// <returns>Interpolated value</returns>
+    public double GetValue(
+      Weights weights,
+      int[] elmtNodes,
+      SMeshData smesh,
+      double[] nodeValues
+    )
+    {
+      double z1 = nodeValues[elmtNodes[0]];
+      double z2 = nodeValues[elmtNodes[1]];
+      double z3 = nodeValues[elmtNodes[2]];
+      return GetValue(weights.w1, weights.w2, weights.w3, z1, z2, z3);
+    }
+
+    /// <summary>
+    /// Returns interpolated value based on 3 node values
+    /// <para>
+    /// In case values are one of the circular types in <see cref="CircularValueTypes"/>,
+    /// then the values must first be re-referenced, <see cref="CircularValueHandler"/>.
+    /// </para>
+    /// </summary>
+    /// <param name="weights">Triangular interpolation weights</param>
+    /// <param name="elmtNodes">Nodes in element</param>
+    /// <param name="smesh">Mesh data object</param>
+    /// <param name="nodeValues">Node values</param>
+    /// <returns>Interpolated value</returns>
+    public double GetValue(
+      Weights weights,
+      int[] elmtNodes,
+      SMeshData smesh,
+      float[] nodeValues
+    )
+    {
+      double z1 = nodeValues[elmtNodes[0]];
+      double z2 = nodeValues[elmtNodes[1]];
+      double z3 = nodeValues[elmtNodes[2]];
+      return GetValue(weights.w1, weights.w2, weights.w3, z1, z2, z3);
+    }
 
     /// <summary>
     /// Returns interpolated value based on 3 node values
@@ -155,6 +261,19 @@ namespace DHI.Mesh
     )
     {
 
+      if (CircularType != CircularValueTypes.Normal)
+      {
+        double circReference = DelVal;
+        if (CircularValueHandler.AsReference(T1, ref circReference, DelVal) ||
+            CircularValueHandler.AsReference(T2, ref circReference, DelVal) ||
+            CircularValueHandler.AsReference(T3, ref circReference, DelVal))
+        {
+          if (T1 != DelVal) CircularValueHandler.ToReference(CircularType, ref T1, circReference);
+          if (T2 != DelVal) CircularValueHandler.ToReference(CircularType, ref T2, circReference);
+          if (T3 != DelVal) CircularValueHandler.ToReference(CircularType, ref T3, circReference);
+        }
+      }
+
       double value      = 0;
       double weight     = 0;
       int    delValMask = 0;
@@ -200,28 +319,32 @@ namespace DHI.Mesh
       // Check if only one non-delete value is present
       switch (delValMask)
       {
-        case 0: // All had values
-          return value;
+        //case 0: // All had values
+        //  return value;
 
         case dvm1: // Only one delete value, and we are outside the
         case dvm2: // "delete value area".
         case dvm3: // Weight them accordingly
-          return value / weight;
+          value = value / weight;
+          break;
 
         case dvm1 + dvm2: // Only T3 is non-delete
           // If we are close to T3, use that, otherwise delVal
-          return (w3 > 0.5) ? T3 : DelVal;
+          value = (w3 > 0.5) ? T3 : DelVal;
+          break;
         case dvm2 + dvm3: // Only T1 is non-delete
           // If we are close to T1, use that, otherwise delVal
-          return (w1 > 0.5) ? T1 : DelVal;
+          value = (w1 > 0.5) ? T1 : DelVal;
+          break;
         case dvm3 + dvm1: // Only T2 is non-delete
           // If we are close to T2, use that, otherwise delVal
-          return (w2 > 0.5) ? T2 : DelVal;
+          value = (w2 > 0.5) ? T2 : DelVal;
+          break;
 
       }
 
-      // Should never get down here, but we need to return something...
-      return DelVal;
+      CircularValueHandler.ToCircular(CircularType, ref value);
+      return value;
     }
 
 

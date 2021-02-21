@@ -1,7 +1,7 @@
 ﻿
 namespace DHI.Mesh
 {
-  // These methods are put in seperate file to ease comparision of float and double version
+  // These methods are put in separate file to ease comparision of float and double version
   public partial class Interpolator
   {
     /// <summary>

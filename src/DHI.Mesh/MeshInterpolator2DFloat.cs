@@ -21,8 +21,8 @@ namespace DHI.Mesh
 
       for (int i = 0; i < _targetsElmtNode.Count; i++)
       {
-        InterPElmtNodeData interPElmtNodeData = _targetsElmtNode[i];
-        if (interPElmtNodeData.Element1Index < 0)
+        InterpElmtNode.Weights interpElmtNode = _targetsElmtNode[i];
+        if (interpElmtNode.Element1Index < 0)
         {
           // target not included in source
           target[i] = _deleteValueFloat;
@@ -31,29 +31,29 @@ namespace DHI.Mesh
 
         // Do interpolation inside (element-element-node) triangle, 
         // disregarding any delete values.
-        double sourceElementValue = sourceElementValues[interPElmtNodeData.Element1Index];
+        double sourceElementValue = sourceElementValues[interpElmtNode.Element1Index];
         if (sourceElementValue != _deleteValue)
         {
-          double value  = sourceElementValue * interPElmtNodeData.Element1Weight;
-          double weight = interPElmtNodeData.Element1Weight;
+          double value  = sourceElementValue * interpElmtNode.Element1Weight;
+          double weight = interpElmtNode.Element1Weight;
 
           {
-            double otherElmentValue = sourceElementValues[interPElmtNodeData.Element2Index];
+            double otherElmentValue = sourceElementValues[interpElmtNode.Element2Index];
             if (otherElmentValue != _deleteValue)
             {
               CircularValueHandler.ToReference(_circularType, ref otherElmentValue, sourceElementValue);
-              value  += otherElmentValue * interPElmtNodeData.Element2Weight;
-              weight += interPElmtNodeData.Element2Weight;
+              value  += otherElmentValue * interpElmtNode.Element2Weight;
+              weight += interpElmtNode.Element2Weight;
             }
           }
 
           {
-            double nodeValue = _nodeValues[interPElmtNodeData.NodeIndex];
+            double nodeValue = _nodeValues[interpElmtNode.NodeIndex];
             if (nodeValue != _deleteValue)
             {
               CircularValueHandler.ToReference(_circularType, ref nodeValue, sourceElementValue);
-              value  += nodeValue * interPElmtNodeData.NodeWeight;
-              weight += interPElmtNodeData.NodeWeight;
+              value  += nodeValue * interpElmtNode.NodeWeight;
+              weight += interpElmtNode.NodeWeight;
             }
           }
 
@@ -74,13 +74,9 @@ namespace DHI.Mesh
     /// </summary>
     public void InterpolateNodeToTarget(double[] sourceNodeValues, float[] target)
     {
-      double           delVal  = DeleteValueFloat;
-      InterpQuadrangle interpQ = new InterpQuadrangle() {DelVal = delVal};
-      InterpTriangle   interpT = new InterpTriangle() { DelVal  = delVal};
-
       for (int i = 0; i < _targetsNode.Count; i++)
       {
-        target[i] = (float)InterpolateNodeToTarget(sourceNodeValues, i, interpQ, interpT);
+        target[i] = (float)InterpolateNodeToTarget(sourceNodeValues, i);
       }
     }
 
@@ -89,24 +85,20 @@ namespace DHI.Mesh
     /// </summary>
     public void InterpolateNodeToTarget(float[] sourceNodeValues, float[] target)
     {
-      double           delVal  = DeleteValueFloat;
-      InterpQuadrangle interpQ = new InterpQuadrangle() {DelVal = delVal};
-      InterpTriangle   interpT = new InterpTriangle() { DelVal  = delVal};
-
       for (int i = 0; i < _targetsNode.Count; i++)
       {
-        target[i] = (float)InterpolateNodeToTarget(sourceNodeValues, i, interpQ, interpT);
+        target[i] = (float)InterpolateNodeToTarget(sourceNodeValues, i);
       }
     }
 
     /// <summary>
     /// Interpolate values from source node values to target points.
     /// </summary>
-    private double InterpolateNodeToTarget(float[] nodeValues, int i, InterpQuadrangle interpQ, InterpTriangle interpT)
+    private double InterpolateNodeToTarget(float[] nodeValues, int i)
     {
       double delVal  = DeleteValueFloat;
 
-      InterPNodeData w = _targetsNode[i];
+      InterpNodeData w = _targetsNode[i];
       int elmtIndex = w.ElementIndex;
 
       if (elmtIndex < 0)
@@ -120,42 +112,23 @@ namespace DHI.Mesh
 
       int[] elmtNodes = _smesh.ElementTable[elmtIndex];
 
-      double circReference = delVal;
-      if (_circularType != CircularValueTypes.Normal)
-      {
-        for (int j = 0; j < elmtNodes.Length; j++)
-        {
-          float nodeValue = nodeValues[elmtNodes[j]];
-          if (nodeValue != delVal)
-          {
-            circReference = nodeValue;
-            break;
-          }
-        }
-      }
-
       double res;
       if (elmtNodes.Length == 3)
       {
-        double v1 = CircularValueHandler.ToReference(_circularType, nodeValues[elmtNodes[0]], circReference);
-        double v2 = CircularValueHandler.ToReference(_circularType, nodeValues[elmtNodes[1]], circReference);
-        double v3 = CircularValueHandler.ToReference(_circularType, nodeValues[elmtNodes[2]], circReference);
+        double v1 = nodeValues[elmtNodes[0]];
+        double v2 = nodeValues[elmtNodes[1]];
+        double v3 = nodeValues[elmtNodes[2]];
 
-        res = interpT.GetValue(w.w1, w.w2, w.w3, v1, v2, v3);
+        res = _interpT.GetValue(w.w1, w.w2, w.w3, v1, v2, v3);
       }
       else
       {
-        double v1 = CircularValueHandler.ToReference(_circularType, nodeValues[elmtNodes[0]], circReference);
-        double v2 = CircularValueHandler.ToReference(_circularType, nodeValues[elmtNodes[1]], circReference);
-        double v3 = CircularValueHandler.ToReference(_circularType, nodeValues[elmtNodes[2]], circReference);
-        double v4 = CircularValueHandler.ToReference(_circularType, nodeValues[elmtNodes[3]], circReference);
+        double v1 = nodeValues[elmtNodes[0]];
+        double v2 = nodeValues[elmtNodes[1]];
+        double v3 = nodeValues[elmtNodes[2]];
+        double v4 = nodeValues[elmtNodes[3]];
 
-        res = interpQ.GetValue(w.w1, w.w2, v1, v2, v3, v4);
-      }
-
-      if (res != delVal)
-      {
-        CircularValueHandler.ToCircular(_circularType, ref res);
+        res = _interpQ.GetValue(w.w1, w.w2, v1, v2, v3, v4);
       }
 
       return res;

@@ -29,10 +29,10 @@ namespace DHI.Mesh.Test
       mesh.BuildDerivedData();
 
       // Create element center Z values array
-      double[] elmtCenterZ = new double[meshFile.NumberOfElements];
-      Array.Copy(mesh.ElementZCenter, elmtCenterZ, mesh.NumberOfElements);
+      double[] elmtZ = new double[meshFile.NumberOfElements];
+      Array.Copy(mesh.ElementZCenter, elmtZ, mesh.NumberOfElements);
       // Make a strong peak at element 5 - in the center of the mesh
-      elmtCenterZ[4] = -6;
+      elmtZ[4] = -6;
 
       // Set up so source can be both element values and node values
       MeshValueType sourceType = MeshValueType.Elements | MeshValueType.Nodes;
@@ -43,7 +43,16 @@ namespace DHI.Mesh.Test
         // Simpler interpolation type
         interpolator.ElementValueInterpolationType = MeshInterpolator2D.ElmtValueInterpolationType.NodeValues;
 
-      // Target coordinates to interpolate values to
+      // Interpolate elmtZ to nodeZ
+      double[] nodeZInterp = new double[mesh.NumberOfNodes];
+      interpolator.SetupElmtToNodeInterpolation();
+      interpolator.NodeInterpolator.Interpolate(elmtZ, nodeZInterp);
+
+      // Interpolation of values one-by-one, no storing of interpolation weights
+      Assert.AreEqual(-5.999, interpolator.InterpolateElmtToXY(0.7833, 0.531, elmtZ, nodeZInterp), 1e-3);
+      Assert.AreEqual(-3.543, interpolator.InterpolateNodeToXY(0.7833, 0.531, nodeZInterp), 1e-3);
+
+      // Add targets, to store interpolation weights
       interpolator.SetTargetSize(mesh.NumberOfElements+1);
       interpolator.AddTarget(0.7833, 0.531); // Target at (almost) center of element 5
       for (int i = 0; i < mesh.NumberOfElements; i++)
@@ -51,15 +60,16 @@ namespace DHI.Mesh.Test
 
       // Array to interpolate values to
       double[] targetValues = new double[mesh.NumberOfElements+1];
+      // Interpolate to all target points
+      interpolator.InterpolateElmtToTarget(elmtZ, targetValues);
 
-      // When element+node values are used, close to peak value of 6
-      interpolator.InterpolateElmtToTarget(elmtCenterZ, targetValues);
       if (!nodeInterp)
       {
+        // When element+node values are used, close to peak value of 6
         Assert.AreEqual(-5.999,  targetValues[0], 1e-3);
         Assert.AreEqual(-3.8225, targetValues[1], 1e-3);
         for (int i = 0; i < mesh.NumberOfElements; i++)
-          Assert.AreEqual(elmtCenterZ[i], targetValues[i+1]);
+          Assert.AreEqual(elmtZ[i], targetValues[i+1]);
       }
       else // Using only node interpolation, the value is cut off
       {

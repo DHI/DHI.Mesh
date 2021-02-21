@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace DHI.Mesh
 {
@@ -6,7 +7,7 @@ namespace DHI.Mesh
   /// Class doing bilinear interpolation on a quadrangle
   /// </summary>
   /// <remarks>
-  /// When calling <see cref="GetValue"/>, delete values are handled as follows:
+  /// When calling <code>GetValue</code> method, delete values are handled as follows:
   ///<code>
   /// P3 = T01          P2 = T11
   ///    |-----------------|
@@ -34,13 +35,18 @@ namespace DHI.Mesh
   /// </remarks>
   // Code is identical to the MzChart class CMzQuadrangle
   // To keep them it as close as possible, names do not follow the standard C# konventions
-  public struct InterpQuadrangle
+  public class InterpQuadrangle
   {
 
     /// <summary>
     /// Delete/undefined value
     /// </summary>
     public double DelVal           { get; set; }
+
+    /// <summary>
+    /// Type of value, for interpolation of radians and degrees
+    /// </summary>
+    public CircularValueTypes CircularType { get; set; } = CircularValueTypes.Normal;
 
     /// <summary>
     /// Specifies whether or not delete value chop-off should be done smoothly
@@ -83,6 +89,74 @@ namespace DHI.Mesh
     public static Weights UndefinedWeights()
     {
       return new Weights(-1, -1);
+    }
+
+    /// <summary>
+    /// Calculate bilinear interpolation weights for the point (x,y) inside the
+    /// quadrangle defined by the nodes in <paramref name="elmtNodes"/>.
+    /// <para>
+    /// Check
+    /// <see cref="InterpolationWeights(double,double,double,double,double,double,double,double,double,double)"/>
+    /// for details
+    /// </para>
+    /// <para>
+    /// if the point (x,y) is not inside the quadrangle, results are undefined.
+    /// </para>
+    /// </summary>
+    /// <param name="x">Point X coordinate</param>
+    /// <param name="y">Point Y coordinate</param>
+    /// <param name="smesh">MeshData object</param>
+    /// <param name="elmtNodes">Nodes in element</param>
+    /// <returns>Bilinear interpolation weights (dx,dy)</returns>
+    public static Weights InterpolationWeights(
+      double x,
+      double y,
+      SMeshData smesh,
+      int[] elmtNodes
+    )
+    {
+      double x1 = smesh.X[elmtNodes[0]];
+      double x2 = smesh.X[elmtNodes[1]];
+      double x3 = smesh.X[elmtNodes[2]];
+      double x4 = smesh.X[elmtNodes[3]];
+      double y1 = smesh.Y[elmtNodes[0]];
+      double y2 = smesh.Y[elmtNodes[1]];
+      double y3 = smesh.Y[elmtNodes[2]];
+      double y4 = smesh.Y[elmtNodes[3]];
+      return InterpolationWeights(x, y, x1, y1, x2, y2, x3, y3, x4, y4);
+    }
+
+    /// <summary>
+    /// Calculate bilinear interpolation weights for the point (x,y) inside the
+    /// quadrangle defined by the nodes in <paramref name="elmtNodes"/>.
+    /// <para>
+    /// Check
+    /// <see cref="InterpolationWeights(double,double,double,double,double,double,double,double,double,double)"/>
+    /// for details
+    /// </para>
+    /// <para>
+    /// if the point (x,y) is not inside the quadrangle, results are undefined.
+    /// </para>
+    /// </summary>
+    /// <param name="x">Point X coordinate</param>
+    /// <param name="y">Point Y coordinate</param>
+    /// <param name="elmtNodes">Nodes in element</param>
+    /// <returns>Bilinear interpolation weights (dx,dy)</returns>
+    public static Weights InterpolationWeights(
+      double x,
+      double y,
+      IList<MeshNode> elmtNodes
+    )
+    {
+      double x1 = elmtNodes[0].X;
+      double x2 = elmtNodes[1].X;
+      double x3 = elmtNodes[2].X;
+      double x4 = elmtNodes[3].X;
+      double y1 = elmtNodes[0].Y;
+      double y2 = elmtNodes[1].Y;
+      double y3 = elmtNodes[2].Y;
+      double y4 = elmtNodes[3].Y;
+      return InterpolationWeights(x, y, x1, y1, x2, y2, x3, y3, x4, y4);
     }
 
     /// <summary>
@@ -225,6 +299,60 @@ namespace DHI.Mesh
     /// </para>
     /// </summary>
     /// <param name="weights">Bilinear interpolation weights</param>
+    /// <param name="elmtNodes">Nodes in element</param>
+    /// <param name="smesh">Mesh data object</param>
+    /// <param name="nodeValues">Node values</param>
+    /// <returns>Interpolated value</returns>
+    // Matching CMzQuadrangle::GetValue
+    public double GetValue(
+      Weights weights,
+      int[] elmtNodes,
+      SMeshData smesh,
+      float[] nodeValues
+    )
+    {
+      double z1 = nodeValues[elmtNodes[0]];
+      double z2 = nodeValues[elmtNodes[1]];
+      double z3 = nodeValues[elmtNodes[2]];
+      double z4 = nodeValues[elmtNodes[3]];
+      return GetValue(weights.dx, weights.dy, z1, z2, z3, z4);
+    }
+
+    /// <summary>
+    /// Returns interpolated value based on 4 node values
+    /// <para>
+    /// In case values are one of the circular types in <see cref="CircularValueTypes"/>,
+    /// then the values must first be re-referenced, <see cref="CircularValueHandler"/>.
+    /// </para>
+    /// </summary>
+    /// <param name="weights">Bilinear interpolation weights</param>
+    /// <param name="elmtNodes">Nodes in element</param>
+    /// <param name="smesh">Mesh data object</param>
+    /// <param name="nodeValues">Node values</param>
+    /// <returns>Interpolated value</returns>
+    // Matching CMzQuadrangle::GetValue
+    public double GetValue(
+      Weights weights,
+      int[] elmtNodes,
+      SMeshData smesh,
+      double[] nodeValues
+    )
+    {
+      double z1 = nodeValues[elmtNodes[0]];
+      double z2 = nodeValues[elmtNodes[1]];
+      double z3 = nodeValues[elmtNodes[2]];
+      double z4 = nodeValues[elmtNodes[3]];
+      return GetValue(weights.dx, weights.dy, z1, z2, z3, z4);
+    }
+
+    /// <summary>
+    /// Returns interpolated value based on 4 node values
+    /// <para>
+    /// In case values are one of the circular types in <see cref="CircularValueTypes"/>,
+    /// then the values must first be re-referenced, <see cref="CircularValueHandler"/>.
+    /// </para>
+    /// </summary>
+    /// <param name="weights">Bilinear interpolation weights</param>
     /// <param name="T00">Node value 1</param>
     /// <param name="T10">Node value 2</param>
     /// <param name="T11">Node value 3</param>
@@ -269,8 +397,22 @@ namespace DHI.Mesh
     )
     {
 
+      if (CircularType != CircularValueTypes.Normal)
+      {
+        double circReference = DelVal;
+        if (CircularValueHandler.AsReference(T00, ref circReference, DelVal) ||
+            CircularValueHandler.AsReference(T01, ref circReference, DelVal) ||
+            CircularValueHandler.AsReference(T11, ref circReference, DelVal) ||
+            CircularValueHandler.AsReference(T10, ref circReference, DelVal))
+        {
+          if (T00 != DelVal) CircularValueHandler.ToReference(CircularType, ref T00, circReference);
+          if (T01 != DelVal) CircularValueHandler.ToReference(CircularType, ref T01, circReference);
+          if (T11 != DelVal) CircularValueHandler.ToReference(CircularType, ref T11, circReference);
+          if (T10 != DelVal) CircularValueHandler.ToReference(CircularType, ref T10, circReference);
+        }
+      }
 
-      int    deleteValueMask = DeleteValueMask(T00, T10, T11, T01);
+      int deleteValueMask = DeleteValueMask(T00, T10, T11, T01);
 
       const double m_xc = 0.5;
       const double m_yc = 0.5;
@@ -489,6 +631,7 @@ namespace DHI.Mesh
           z = DelVal;
           break;
       }
+      CircularValueHandler.ToCircular(CircularType, ref z);
       return z;
     }
   }
