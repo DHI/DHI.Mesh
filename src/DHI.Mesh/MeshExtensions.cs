@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net;
 
 namespace DHI.Mesh
 {
@@ -313,6 +312,52 @@ namespace DHI.Mesh
     public static SMeshData ToSMeshData(this MeshFile file)
     {
       return SMeshData.CreateMesh(file.Projection, file.NodeIds, file.X, file.Y, file.Z, file.Code, file.ElementIds, file.ElementType, file.ElementTable.ToZeroBased(), file.ZUnit);
+    }
+
+    /// <summary>
+    /// Convert a <see cref="MeshData"/> class into a <see cref="MeshFile"/> class.
+    /// </summary>
+    public static SMeshData ToSMesh(this MeshData meshData)
+    {
+      int      numberOfNodes = meshData.Nodes.Count;
+      int[]    nodeId        = new int[numberOfNodes];
+      double[] x             = new double[numberOfNodes];
+      double[] y             = new double[numberOfNodes];
+      double[] z             = new double[numberOfNodes];
+      int[]    code          = new int[numberOfNodes];
+
+      for (int i = 0; i < numberOfNodes; i++)
+      {
+        MeshNode node = meshData.Nodes[i];
+        nodeId[i] = node.Id;
+        x[i]      = node.X;
+        y[i]      = node.Y;
+        z[i]      = node.Z;
+        code[i]   = node.Code;
+      }
+
+      int     numberOfElements = meshData.Elements.Count;
+      int[]   elmtId           = new int[numberOfElements];
+      int[][] elmtTable        = new int[numberOfElements][];
+      for (int i = 0; i < numberOfElements; i++)
+      {
+        MeshElement elmt = meshData.Elements[i];
+        elmtId[i] = elmt.Id;
+        int[] elmtNodes = new int[elmt.Nodes.Count];
+        elmtTable[i] = elmtNodes;
+        for (int j = 0; j < elmt.Nodes.Count; j++)
+        {
+          elmtNodes[j] = elmt.Nodes[j].Index + 1;
+        }
+      }
+
+      SMeshData smesh =
+        SMeshData.CreateMesh(
+          meshData.Projection,
+          nodeId, x, y, z, code,
+          elmtId, null, elmtTable, meshData.ZUnit
+        );
+      return smesh;
     }
 
 

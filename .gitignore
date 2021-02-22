@@ -6,3 +6,4 @@ obj
 *csproj.user
 *DotSettings.user
 /TestData/test_*
+/TestDataRef/test_*

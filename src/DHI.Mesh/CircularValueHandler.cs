@@ -42,6 +42,36 @@ namespace DHI.Mesh
       }
       return false;
     }
+    
+    
+    /// <summary>
+    /// Make <paramref name="sourceValue"/> sufficiently close to <paramref name="refValue"/>
+    /// in order to interpolate on angular values.
+    /// </summary>
+    public static void ToReference(CircularValueTypes circularType, ref double sourceValue, double refValue, double delVal)
+    {
+      if (sourceValue == delVal)
+        return;
+
+      switch (circularType)
+      {
+        case CircularValueTypes.RadiansPi:
+        case CircularValueTypes.Radians2Pi:
+          if (sourceValue - refValue > Math.PI)
+            sourceValue -= 2 * Math.PI;
+          else if (sourceValue - refValue < -Math.PI)
+            sourceValue += 2 * Math.PI;
+          break;
+        case CircularValueTypes.Degrees180:
+        case CircularValueTypes.Degrees360:
+          if (sourceValue - refValue > 180.0)
+            sourceValue -= 360.0;
+          else if (sourceValue - refValue < -180.0)
+            sourceValue += 360.0;
+          break;
+      }
+    }
+
 
     /// <summary>
     /// Make <paramref name="sourceValue"/> sufficiently close to <paramref name="refValue"/>

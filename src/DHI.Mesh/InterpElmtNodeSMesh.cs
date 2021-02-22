@@ -84,7 +84,7 @@
           weights.Element1Weight = w1;
           weights.NodeWeight     = w2;
           weights.Element2Weight = w3;
-          found                         = true;
+          found = true;
           break;
         }
 
@@ -117,53 +117,6 @@
       }
 
       return weights;
-    }
-
-    /// <summary>
-    /// Returns interpolated value based on the <paramref name="weights"/>
-    /// </summary>
-    /// <param name="weights">Triangular interpolation weights</param>
-    /// <param name="elmtValues">Values at element centers</param>
-    /// <param name="nodeValues">Values at nodes</param>
-    /// <returns>Interpolated value</returns>
-    public double GetValue(Weights weights, double[] elmtValues, double[] nodeValues)
-    {
-
-      // Do interpolation inside (element-element-node) triangle, 
-      // disregarding any delete values.
-      double sourceElementValue = elmtValues[weights.Element1Index];
-      if (sourceElementValue != DelVal)
-      {
-        double value  = sourceElementValue * weights.Element1Weight;
-        double weight = weights.Element1Weight;
-
-        {
-          double otherElmentValue = elmtValues[weights.Element2Index];
-          if (otherElmentValue != DelVal)
-          {
-            CircularValueHandler.ToReference(CircularType, ref otherElmentValue, sourceElementValue);
-            value  += otherElmentValue * weights.Element2Weight;
-            weight += weights.Element2Weight;
-          }
-        }
-
-        {
-          double nodeValue = nodeValues[weights.NodeIndex];
-          if (nodeValue != DelVal)
-          {
-            CircularValueHandler.ToReference(CircularType, ref nodeValue, sourceElementValue);
-            value  += nodeValue * weights.NodeWeight;
-            weight += weights.NodeWeight;
-          }
-        }
-
-        value /= weight;
-        CircularValueHandler.ToCircular(CircularType, ref value);
-        return value;
-      }
-
-      return DelVal;
-
     }
 
   }

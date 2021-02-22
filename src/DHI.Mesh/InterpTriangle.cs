@@ -264,13 +264,14 @@ namespace DHI.Mesh
       if (CircularType != CircularValueTypes.Normal)
       {
         double circReference = DelVal;
+        // Try find circReference value - the first non-delete value
         if (CircularValueHandler.AsReference(T1, ref circReference, DelVal) ||
             CircularValueHandler.AsReference(T2, ref circReference, DelVal) ||
             CircularValueHandler.AsReference(T3, ref circReference, DelVal))
         {
-          if (T1 != DelVal) CircularValueHandler.ToReference(CircularType, ref T1, circReference);
-          if (T2 != DelVal) CircularValueHandler.ToReference(CircularType, ref T2, circReference);
-          if (T3 != DelVal) CircularValueHandler.ToReference(CircularType, ref T3, circReference);
+          CircularValueHandler.ToReference(CircularType, ref T1, circReference, DelVal);
+          CircularValueHandler.ToReference(CircularType, ref T2, circReference, DelVal);
+          CircularValueHandler.ToReference(CircularType, ref T3, circReference, DelVal);
         }
       }
 

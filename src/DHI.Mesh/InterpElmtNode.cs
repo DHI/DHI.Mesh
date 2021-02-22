@@ -132,7 +132,7 @@
           weights.Element1Weight = w1;
           weights.NodeWeight     = w2;
           weights.Element2Weight = w3;
-          found                         = true;
+          found = true;
           break;
         }
 
@@ -150,7 +150,7 @@
           weights.Element1Weight = w1;
           weights.Element2Weight = w2;
           weights.NodeWeight     = w3;
-          found                         = true;
+          found = true;
           break;
         }
       }
@@ -176,33 +176,57 @@
     /// <returns>Interpolated value</returns>
     public double GetValue(Weights weights, float[] elmtValues, float[] nodeValues)
     {
+      return GetValue(weights, 
+                      elmtValues[weights.Element1Index], 
+                      elmtValues[weights.Element2Index],
+                      nodeValues[weights.NodeIndex]);
+    }
+
+    /// <summary>
+    /// Returns interpolated value based on the <paramref name="weights"/>
+    /// </summary>
+    /// <param name="weights">Triangular interpolation weights</param>
+    /// <param name="elmtValues">Values at element centers</param>
+    /// <param name="nodeValues">Values at nodes</param>
+    /// <returns>Interpolated value</returns>
+    public double GetValue(Weights weights, double[] elmtValues, double[] nodeValues)
+    {
+      return GetValue(weights, 
+                      elmtValues[weights.Element1Index], 
+                      elmtValues[weights.Element2Index],
+                      nodeValues[weights.NodeIndex]);
+    }
+
+    /// <summary>
+    /// Returns interpolated value based on the <paramref name="weights"/>
+    /// </summary>
+    /// <param name="weights">Interpolation weights</param>
+    /// <param name="elmt1Value">Element 1 value matching <see cref="Weights.Element1Index"/></param>
+    /// <param name="elmt2Value">Element 2 value matching <see cref="Weights.Element2Index"/></param>
+    /// <param name="nodeValue">Node value matching <see cref="Weights.NodeIndex"/></param>
+    /// <returns>Interpolated value</returns>
+    public double GetValue(Weights weights, double elmt1Value, double elmt2Value, double nodeValue)
+    {
 
       // Do interpolation inside (element-element-node) triangle, 
       // disregarding any delete values.
-      double sourceElementValue = elmtValues[weights.Element1Index];
-      if (sourceElementValue != DelVal)
+      if (elmt1Value != DelVal)
       {
-        double value  = sourceElementValue * weights.Element1Weight;
+        double value  = elmt1Value * weights.Element1Weight;
         double weight = weights.Element1Weight;
 
+        if (elmt2Value != DelVal)
         {
-          double otherElmentValue = elmtValues[weights.Element2Index];
-          if (otherElmentValue != DelVal)
-          {
-            CircularValueHandler.ToReference(CircularType, ref otherElmentValue, sourceElementValue);
-            value  += otherElmentValue * weights.Element2Weight;
-            weight += weights.Element2Weight;
-          }
+          CircularValueHandler.ToReference(CircularType, ref elmt2Value, elmt1Value);
+          value  += elmt2Value * weights.Element2Weight;
+          weight += weights.Element2Weight;
         }
 
+        if (nodeValue != DelVal)
         {
-          double nodeValue = nodeValues[weights.NodeIndex];
-          if (nodeValue != DelVal)
-          {
-            CircularValueHandler.ToReference(CircularType, ref nodeValue, sourceElementValue);
-            value  += nodeValue * weights.NodeWeight;
-            weight += weights.NodeWeight;
-          }
+          CircularValueHandler.ToReference(CircularType, ref nodeValue, elmt1Value);
+          value  += nodeValue * weights.NodeWeight;
+          weight += weights.NodeWeight;
         }
 
         value /= weight;

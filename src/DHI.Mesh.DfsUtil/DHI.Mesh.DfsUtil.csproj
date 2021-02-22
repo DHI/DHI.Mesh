@@ -78,8 +78,8 @@
     <Compile Include="..\DHI.Mesh\InterpElmtNode.cs">
       <Link>InterpElmtNode.cs</Link>
     </Compile>
-    <Compile Include="..\DHI.Mesh\InterpElmtNode2.cs">
-      <Link>InterpElmtNode2.cs</Link>
+    <Compile Include="..\DHI.Mesh\InterpElmtNodeSMesh.cs">
+      <Link>InterpElmtNodeSMesh.cs</Link>
     </Compile>
     <Compile Include="..\DHI.Mesh\InterpQuadrangle.cs">
       <Link>InterpQuadrangle.cs</Link>

@@ -167,7 +167,7 @@ namespace DHI.Mesh
     /// from values at the four quadrangle points using bilinear interpolation
     /// </para>
     /// <para>
-    /// if the point (x,y) is not inside the quadrangle, results are undefined.
+    /// If the point (x,y) is not inside the quadrangle, results are undefined.
     /// </para>
     /// </summary>
     /// <returns>Bilinear interpolation weights (dx,dy)</returns>
@@ -303,7 +303,6 @@ namespace DHI.Mesh
     /// <param name="smesh">Mesh data object</param>
     /// <param name="nodeValues">Node values</param>
     /// <returns>Interpolated value</returns>
-    // Matching CMzQuadrangle::GetValue
     public double GetValue(
       Weights weights,
       int[] elmtNodes,
@@ -330,7 +329,6 @@ namespace DHI.Mesh
     /// <param name="smesh">Mesh data object</param>
     /// <param name="nodeValues">Node values</param>
     /// <returns>Interpolated value</returns>
-    // Matching CMzQuadrangle::GetValue
     public double GetValue(
       Weights weights,
       int[] elmtNodes,
@@ -358,7 +356,6 @@ namespace DHI.Mesh
     /// <param name="T11">Node value 3</param>
     /// <param name="T01">Node value 4</param>
     /// <returns>Interpolated value</returns>
-    // Matching CMzQuadrangle::GetValue
     public double GetValue(
       Weights weights,
       double T00,
@@ -400,15 +397,16 @@ namespace DHI.Mesh
       if (CircularType != CircularValueTypes.Normal)
       {
         double circReference = DelVal;
+        // Try find circReference value - the first non-delete value
         if (CircularValueHandler.AsReference(T00, ref circReference, DelVal) ||
             CircularValueHandler.AsReference(T01, ref circReference, DelVal) ||
             CircularValueHandler.AsReference(T11, ref circReference, DelVal) ||
             CircularValueHandler.AsReference(T10, ref circReference, DelVal))
         {
-          if (T00 != DelVal) CircularValueHandler.ToReference(CircularType, ref T00, circReference);
-          if (T01 != DelVal) CircularValueHandler.ToReference(CircularType, ref T01, circReference);
-          if (T11 != DelVal) CircularValueHandler.ToReference(CircularType, ref T11, circReference);
-          if (T10 != DelVal) CircularValueHandler.ToReference(CircularType, ref T10, circReference);
+          CircularValueHandler.ToReference(CircularType, ref T00, circReference, DelVal);
+          CircularValueHandler.ToReference(CircularType, ref T01, circReference, DelVal);
+          CircularValueHandler.ToReference(CircularType, ref T11, circReference, DelVal);
+          CircularValueHandler.ToReference(CircularType, ref T10, circReference, DelVal);
         }
       }
 

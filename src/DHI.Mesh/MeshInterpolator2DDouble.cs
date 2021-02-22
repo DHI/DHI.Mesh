@@ -21,50 +21,17 @@ namespace DHI.Mesh
 
       for (int i = 0; i < _targetsElmtNode.Count; i++)
       {
-        InterpElmtNode.Weights interpElmtNode = _targetsElmtNode[i];
-        if (interpElmtNode.Element1Index < 0)
+        InterpElmtNode.Weights weights = _targetsElmtNode[i];
+        if (weights.Element1Index < 0)
         {
           // target not included in source
           target[i] = _deleteValue;
-          continue;
-        }
-
-        // Do interpolation inside (element-element-node) triangle, 
-        // disregarding any delete values.
-        double sourceElementValue = sourceElementValues[interpElmtNode.Element1Index];
-        if (sourceElementValue != _deleteValue)
-        {
-          double value  = sourceElementValue * interpElmtNode.Element1Weight;
-          double weight = interpElmtNode.Element1Weight;
-
-          {
-            double otherElmentValue = sourceElementValues[interpElmtNode.Element2Index];
-            if (otherElmentValue != _deleteValue)
-            {
-              CircularValueHandler.ToReference(_circularType, ref otherElmentValue, sourceElementValue);
-              value  += otherElmentValue * interpElmtNode.Element2Weight;
-              weight += interpElmtNode.Element2Weight;
-            }
-          }
-
-          {
-            double nodeValue = _nodeValues[interpElmtNode.NodeIndex];
-            if (nodeValue != _deleteValue)
-            {
-              CircularValueHandler.ToReference(_circularType, ref nodeValue, sourceElementValue);
-              value  += nodeValue * interpElmtNode.NodeWeight;
-              weight += interpElmtNode.NodeWeight;
-            }
-          }
-
-          value    /= weight;
-          CircularValueHandler.ToCircular(_circularType, ref value);
-          target[i] =  value;
         }
         else
-        {
-          target[i] = _deleteValue;
-        }
+          target[i] =        _interpEN.GetValue(weights,
+                                                sourceElementValues[weights.Element1Index],
+                                                sourceElementValues[weights.Element2Index],
+                                                _nodeValues[weights.NodeIndex]);
       }
     }
 
