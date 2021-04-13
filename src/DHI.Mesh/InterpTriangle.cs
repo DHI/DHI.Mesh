@@ -80,6 +80,33 @@ namespace DHI.Mesh
       return new Weights(-1, -1, -1);
     }
 
+
+    /// <summary>
+    /// Calculate interpolation weights for the point (x,y) inside the triangle defined by
+    /// the nodes in <paramref name="elmtNodes"/>.
+    ///<para>
+    /// Check
+    /// <see cref="InterpolationWeights(double,double,double,double,double,double,double,double)"/>
+    /// for details.
+    /// </para>
+    /// </summary>
+    /// <param name="x">Point X coordinate</param>
+    /// <param name="y">Point Y coordinate</param>
+    /// <param name="smesh">MeshData object</param>
+    /// <param name="elmtIndex">Element index containing (x,y) coordinate</param>
+    /// <returns>Interpolation weights (w1,w2,w3)</returns>
+    public static Weights InterpolationWeights(double x, double y, SMeshData smesh, int elmtIndex)
+    {
+      int[] elmtNodes = smesh.ElementTable[elmtIndex];
+      double x1 = smesh.X[elmtNodes[0]];
+      double x2 = smesh.X[elmtNodes[1]];
+      double x3 = smesh.X[elmtNodes[2]];
+      double y1 = smesh.Y[elmtNodes[0]];
+      double y2 = smesh.Y[elmtNodes[1]];
+      double y3 = smesh.Y[elmtNodes[2]];
+      return InterpTriangle.InterpolationWeights(x, y, x1, y1, x2, y2, x3, y3);
+    }
+
     /// <summary>
     /// Calculate interpolation weights for the point (x,y) inside the triangle defined by
     /// the nodes in <paramref name="elmtNodes"/>.
