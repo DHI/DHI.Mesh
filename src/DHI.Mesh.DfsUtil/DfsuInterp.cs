@@ -281,11 +281,11 @@ namespace DHI.Mesh.DfsUtil
 
     public static SMeshData Create(DfsuFile dfsu)
     {
-      return SMeshData.CreateMesh(dfsu.Projection.WKTString, dfsu.NodeIds, dfsu.X, dfsu.Y, dfsu.Z.ToDoubleArray(), dfsu.Code, dfsu.ElementIds, dfsu.ElementType, dfsu.ElementTable);
+      return SMeshData.CreateMesh(dfsu.Projection.WKTString, dfsu.NodeIds, dfsu.X, dfsu.Y, dfsu.Z.ToDoubleArray(), dfsu.Code, dfsu.ElementIds, dfsu.ElementType, dfsu.ElementTable.ToZeroBased());
     }
     public static SMeshData Create(MeshFile mesh)
     {
-      return SMeshData.CreateMesh(mesh.Projection, mesh.NodeIds, mesh.X, mesh.Y, mesh.Z, mesh.Code, mesh.ElementIds, mesh.ElementType, mesh.ElementTable);
+      return SMeshData.CreateMesh(mesh.Projection, mesh.NodeIds, mesh.X, mesh.Y, mesh.Z, mesh.Code, mesh.ElementIds, mesh.ElementType, mesh.ElementTable.ToZeroBased());
     }
 
     public static SMeshData SCreate(DfsuFile dfsu)
