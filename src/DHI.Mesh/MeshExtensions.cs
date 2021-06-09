@@ -307,7 +307,7 @@ namespace DHI.Mesh
     }
 
     /// <summary>
-    /// Convert a <see cref="MeshFile"/> class into a <see cref="MeshData"/> class.
+    /// Convert a <see cref="MeshFile"/> class into a <see cref="SMeshData"/> class.
     /// </summary>
     public static SMeshData ToSMeshData(this MeshFile file)
     {
@@ -315,7 +315,7 @@ namespace DHI.Mesh
     }
 
     /// <summary>
-    /// Convert a <see cref="MeshData"/> class into a <see cref="MeshFile"/> class.
+    /// Convert a <see cref="MeshData"/> class into a <see cref="SMeshData"/> class.
     /// </summary>
     public static SMeshData ToSMesh(this MeshData meshData)
     {
@@ -347,7 +347,7 @@ namespace DHI.Mesh
         elmtTable[i] = elmtNodes;
         for (int j = 0; j < elmt.Nodes.Count; j++)
         {
-          elmtNodes[j] = elmt.Nodes[j].Index + 1;
+          elmtNodes[j] = elmt.Nodes[j].Index;
         }
       }
 
@@ -424,7 +424,7 @@ namespace DHI.Mesh
         meshData.Code,
         meshData.ElementIds,
         meshData.ElementType,
-        meshData.ElementTable);
+        meshData.ElementTable.ToOneBased());
     }
 
 
