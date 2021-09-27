@@ -53,8 +53,8 @@ namespace DHI.Mesh.DfsUtil
       watch.Start();
 
 
-      MeshData sourceMesh = Create(sourceDfsu);
-      MeshData targetMesh = Create(targetDfsu);
+      SMeshData sourceMesh = Create(sourceDfsu);
+      SMeshData targetMesh = Create(targetDfsu);
       sourceMesh.BuildDerivedData();
 
 
@@ -63,13 +63,13 @@ namespace DHI.Mesh.DfsUtil
       watch.Reset();
       watch.Start();
 
-      MeshInterpolator2D interpolator = new MeshInterpolator2D(sourceMesh)
+      MeshInterpolator2D interpolator = new MeshInterpolator2D(sourceMesh, MeshValueType.Elements)
       {
         DeleteValue = sourceDfsu.DeleteValueFloat,
         DeleteValueFloat = sourceDfsu.DeleteValueFloat,
         //AllowExtrapolation = true,
       };
-      interpolator.SetTarget(targetMesh);
+      interpolator.SetTarget(targetMesh, MeshValueType.Elements);
 
       watch.Stop();
       Console.Out.WriteLine("Interpolator: " + watch.Elapsed.TotalSeconds);
@@ -83,7 +83,7 @@ namespace DHI.Mesh.DfsUtil
       IDfsItemData<float> sourceData;
       while (null != (sourceData = sourceDfsu.ReadItemTimeStepNext() as IDfsItemData<float>))
       {
-        interpolator.InterpolateToTarget(sourceData.Data, targetData);
+        interpolator.InterpolateElmtToTarget(sourceData.Data, targetData);
         targetDfsu.WriteItemTimeStepNext(sourceData.Time, targetData);
       }
       watch.Stop();
@@ -182,13 +182,13 @@ namespace DHI.Mesh.DfsUtil
       {
         watch.Start();
         // Build up interpolatin structures
-        interpolator = new MeshInterpolator2D(comMesh)
+        interpolator = new MeshInterpolator2D(comMesh, MeshValueType.Elements)
         {
           DeleteValue      = comdfsu.DeleteValueFloat,
           DeleteValueFloat = comdfsu.DeleteValueFloat,
           //AllowExtrapolation = true,
         };
-        interpolator.SetTarget(refMesh);
+        interpolator.SetTarget(refMesh, MeshValueType.Elements);
         // Temporary, interpolated compare-data
         targetData = new float[diffDfsu.NumberOfElements];
         watch.Stop();
@@ -206,7 +206,7 @@ namespace DHI.Mesh.DfsUtil
       {
 
         if (interpolator != null)
-          interpolator.InterpolateToTarget(comData.Data, targetData);
+          interpolator.InterpolateElmtToTarget(comData.Data, targetData);
         else
         {
           targetData = comData.Data;
@@ -279,13 +279,13 @@ namespace DHI.Mesh.DfsUtil
     }
 
 
-    public static MeshData Create(DfsuFile dfsu)
+    public static SMeshData Create(DfsuFile dfsu)
     {
-      return MeshData.CreateMesh(dfsu.Projection.WKTString, dfsu.NodeIds, dfsu.X, dfsu.Y, dfsu.Z.ToDoubleArray(), dfsu.Code, dfsu.ElementIds, dfsu.ElementType, dfsu.ElementTable);
+      return SMeshData.CreateMesh(dfsu.Projection.WKTString, dfsu.NodeIds, dfsu.X, dfsu.Y, dfsu.Z.ToDoubleArray(), dfsu.Code, dfsu.ElementIds, dfsu.ElementType, dfsu.ElementTable.ToZeroBased());
     }
-    public static MeshData Create(MeshFile mesh)
+    public static SMeshData Create(MeshFile mesh)
     {
-      return MeshData.CreateMesh(mesh.Projection, mesh.NodeIds, mesh.X, mesh.Y, mesh.Z, mesh.Code, mesh.ElementIds, mesh.ElementType, mesh.ElementTable);
+      return SMeshData.CreateMesh(mesh.Projection, mesh.NodeIds, mesh.X, mesh.Y, mesh.Z, mesh.Code, mesh.ElementIds, mesh.ElementType, mesh.ElementTable.ToZeroBased());
     }
 
     public static SMeshData SCreate(DfsuFile dfsu)

@@ -75,6 +75,18 @@
     <Compile Include="..\DHI.Mesh\InterpolatorFloat.cs">
       <Link>InterpolatorFloat.cs</Link>
     </Compile>
+    <Compile Include="..\DHI.Mesh\InterpElmtNode.cs">
+      <Link>InterpElmtNode.cs</Link>
+    </Compile>
+    <Compile Include="..\DHI.Mesh\InterpElmtNodeSMesh.cs">
+      <Link>InterpElmtNodeSMesh.cs</Link>
+    </Compile>
+    <Compile Include="..\DHI.Mesh\InterpQuadrangle.cs">
+      <Link>InterpQuadrangle.cs</Link>
+    </Compile>
+    <Compile Include="..\DHI.Mesh\InterpTriangle.cs">
+      <Link>InterpTriangle.cs</Link>
+    </Compile>
     <Compile Include="..\DHI.Mesh\MeshBoundary.cs">
       <Link>MeshBoundary.cs</Link>
     </Compile>

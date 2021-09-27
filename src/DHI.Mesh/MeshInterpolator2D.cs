@@ -3,80 +3,156 @@
 namespace DHI.Mesh
 {
   /// <summary>
+  /// Mesh value type, where do values live.
+  /// <para>
+  /// Some algorithm supports both types, hence there both can be set.
+  /// </para>
+  /// </summary>
+  [System.Flags]
+  public enum MeshValueType
+  {
+    /// <summary> Mesh values are element center values </summary>
+    Elements = 1,
+    /// <summary> Mesh values are node values </summary>
+    Nodes = 2,
+  }
+
+  /// <summary>
   /// Class for interpolating values from a 2D mesh, where data is defined in
   /// the 2D mesh at the center of the mesh elements.
   /// <para>
-  /// Interpolation points are specified point by point, in the <see cref="SetTarget"/> method,
+  /// Interpolation points are specified point by point, in the <see cref="AddTarget"/> method,
   /// so it is possible to interpolate to a point, a line or another mesh, by specifying
-  /// target points accordingly. 
+  /// target points accordingly.
+  /// </para>
+  /// <para>
+  /// <see cref="InterpolateNodeToXY"/> or <see cref="InterpolateElmtToXY"/>.
   /// </para>
   /// </summary>
   public partial class MeshInterpolator2D
   {
+
+
     /// <summary>
-    /// Data for interpolating value in the triangle of two elements and a node
+    /// Enumeration indicating how interpolation from element center
+    /// values takes place.
     /// </summary>
-    struct InterPData
+    public enum ElmtValueInterpolationType
     {
-      /// <summary> Source element. -1 if not available in source data </summary>
-      public int Element1Index;
-      /// <summary> Other element, on the other side of the face. For boundary faces, source element value is used. </summary>
-      public int Element2Index;
-      /// <summary> Node with interpolated value </summary>
-      public int NodeIndex;
-      /// <summary> Source element value weight </summary>
-      public double Element1Weight;
-      /// <summary> other element value weight </summary>
-      public double Element2Weight;
-      /// <summary> node value weight </summary>
-      public double NodeWeight;
+      /// <summary>
+      /// Interpolate element values to nodes, and use
+      /// element and node values for the final interpolation.
+      /// This is the most accurate interpolation routine.
+      /// </summary>
+      ElmtNodeValues,
+      /// <summary>
+      /// Interpolate element values to nodes, and use
+      /// noe values for the final interpolation.
+      /// This will clip max and min values in element centers,
+      /// and is less accurate.
+      /// It is the original approach in many of DHI tools.
+      /// </summary>
+      NodeValues,
     }
 
-    /// <summary> Source mesh </summary>
-    private MeshData _mesh;
-
-    private CircularValueTypes _circularType = CircularValueTypes.Normal;
-    private bool _allowExtrapolation;
-
-    /// <summary> Delete/undefined value </summary>
-    private double _deleteValue = double.MinValue;
-    /// <summary> Delete/undefined value </summary>
-    private float _deleteValueFloat = float.MinValue;
-
-    /// <summary> Interpolator for interpolating from element to node values in source mesh </summary>
-    private Interpolator _nodeInterpolator;
-
-    /// <summary> Target interpolation values </summary>
-    private List<InterPData> _targets;
-
-    /// <summary> Searcher, for finding elements for a given coordinate </summary>
-    private MeshSearcher _searcher;
-
-    /// <summary> Node values, interpolated from element values. </summary>
-    private double[] _nodeValues;
-
 
     /// <summary>
-    /// Create interpolator based on <paramref name="sourceMesh"/>
+    /// Data for interpolating value in a triangle or quadrangle element using node values.
     /// </summary>
-    public MeshInterpolator2D(MeshData sourceMesh)
+    struct InterpNodeData
     {
-      _mesh = sourceMesh;
+      public InterpNodeData(int elmt, double ww1, double ww2, double ww3 = -1)
+      {
+        ElementIndex = elmt;
+        w1 = ww1;
+        w2 = ww2;
+        w3 = ww3;
+      }
+      /// <summary> Source element. -1 if not available in source data </summary>
+      public int ElementIndex;
+      /// <summary> Weight 1. For quads, this is bilinar dx coordiante [0;1] </summary>
+      public double w1;
+      /// <summary> Weight 2. For quads, this is bilinar dy coordiante [0;1] </summary>
+      public double w2;
+      /// <summary> Weight 3. For quads, this is not used </summary>
+      public double w3;
+
+      public static InterpNodeData Undefined()
+      {
+        return new InterpNodeData(-1, -1, -1, -1);
+      }
+    }
+
+    /// <summary>
+    /// Flag indicating how interpolation from element center
+    /// values takes place.
+    /// </summary>
+    public ElmtValueInterpolationType ElementValueInterpolationType
+    {
+      get { return _elmtValueInterpolationType; }
+      set { _elmtValueInterpolationType = value; }
+    }
+    private ElmtValueInterpolationType _elmtValueInterpolationType = ElmtValueInterpolationType.ElmtNodeValues;
+
+    /// <summary>
+    /// Returns true if node interpolation is to be set up.
+    /// This is the case when source provides node values,
+    /// or if source is element values, but <see cref="ElementValueInterpolationType"/>
+    /// is set to <see cref="ElmtValueInterpolationType.NodeValues"/>
+    /// </summary>
+    private bool NodeValueInterpolation
+    {
+      get
+      {
+        return
+          _sourceType.HasFlag(MeshValueType.Nodes) ||
+          _sourceType.HasFlag(MeshValueType.Elements) &&
+          _elmtValueInterpolationType == ElmtValueInterpolationType.NodeValues;
+      }
+    }
+
+    /// <summary>
+    /// Returns true if element-node interpolation is to be set up.
+    /// </summary>
+    private bool ElmtNodeValueInterpolation
+    {
+      get
+      {
+        return
+          _sourceType.HasFlag(MeshValueType.Elements) &&
+          _elmtValueInterpolationType == ElmtValueInterpolationType.ElmtNodeValues;
+      }
     }
 
     /// <summary> Delete/undefined value </summary>
     public double DeleteValue
     {
       get { return _deleteValue; }
-      set { _deleteValue = value; }
+      set
+      {
+        _deleteValue = value;
+        if (_nodeInterpolator != null)
+          _nodeInterpolator.DeleteValue = value;
+        _interpQ.DelVal  = value;
+        _interpT.DelVal  = value;
+        _interpEN.DelVal = value;
+      }
     }
+    /// <summary> Delete/undefined value </summary>
+    private double _deleteValue = double.MinValue;
 
     /// <summary> Delete/undefined value </summary>
     public float DeleteValueFloat
     {
       get { return _deleteValueFloat; }
-      set { _deleteValueFloat = value; }
+      set
+      {
+        _deleteValueFloat = value;
+        DeleteValue       = value;
+      }
     }
+    /// <summary> Delete/undefined value </summary>
+    private float _deleteValueFloat = float.MinValue;
 
     /// <summary>
     /// Type of value, for interpolation of radians and degrees
@@ -89,11 +165,15 @@ namespace DHI.Mesh
         _circularType = value;
         if (_nodeInterpolator != null)
           _nodeInterpolator.CircularType = value;
+        _interpQ .CircularType = value;
+        _interpT .CircularType = value;
+        _interpEN.CircularType = value;
       }
     }
+    private CircularValueTypes _circularType = CircularValueTypes.Normal;
 
     /// <summary>
-    /// Allow extrapolation.
+    /// Allow extrapolation when interpolating element values to nodes.
     /// <para>
     /// Default is false.
     /// </para>
@@ -103,14 +183,65 @@ namespace DHI.Mesh
       get { return _allowExtrapolation; }
       set { _allowExtrapolation = value; }
     }
+    private bool _allowExtrapolation;
 
     /// <summary> Node values, interpolated from element values. </summary>
     public double[] NodeValues
     {
       get { return _nodeValues; }
     }
+    /// <summary> Node values, interpolated from element values. </summary>
+    private double[] _nodeValues;
 
-    public void SetupNodeInterpolation()
+    private InterpQuadrangle _interpQ;
+    private InterpTriangle   _interpT;
+    private InterpElmtNode   _interpEN;
+
+    /// <summary> Source mesh </summary>
+    private MeshData _mesh;
+
+    private MeshValueType _sourceType;
+
+
+    /// <summary> Interpolator for interpolating element center values to node in source mesh </summary>
+    public Interpolator NodeInterpolator { get { return _nodeInterpolator; } }
+    /// <summary> Interpolator for interpolating from element to node values in source mesh </summary>
+    private Interpolator _nodeInterpolator;
+
+    /// <summary> Target interpolation values </summary>
+    private List<InterpElmtNode.Weights> _targetsElmtNode;
+
+    /// <summary> Target interpolation values </summary>
+    private List<InterpNodeData> _targetsNode;
+
+    /// <summary> Searcher, for finding elements for a given coordinate </summary>
+    private MeshSearcher _searcher;
+
+
+    /// <summary>
+    /// Create interpolator based on <paramref name="sourceMesh"/>
+    /// </summary>
+    public MeshInterpolator2D(MeshData sourceMesh, MeshValueType sourceType)
+    {
+      _mesh       = sourceMesh;
+      _sourceType = sourceType;
+      _searcher   = new MeshSearcher(_mesh);
+      _searcher.SetupElementSearch();
+      Init();
+    }
+
+    private void Init()
+    {
+      _interpQ  = new InterpQuadrangle() { DelVal = DeleteValue };
+      _interpT  = new InterpTriangle()   { DelVal   = DeleteValue };
+      _interpEN = new InterpElmtNode()  { DelVal   = DeleteValue };
+    }
+
+
+    /// <summary>
+    /// Setup interpolation from element center values to node values.
+    /// </summary>
+    public void SetupElmtToNodeInterpolation()
     {
       if (_nodeInterpolator == null)
       {
@@ -135,13 +266,26 @@ namespace DHI.Mesh
     /// <summary>
     /// Set a target being all elements of the <paramref name="targetMesh"/>
     /// </summary>
-    public void SetTarget(MeshData targetMesh)
+    public void SetTarget(MeshData targetMesh, MeshValueType targetType)
     {
-      SetTargetSize(targetMesh.NumberOfElements);
-      for (int i = 0; i < targetMesh.Elements.Count; i++)
+      if (targetType == MeshValueType.Elements)
       {
-        MeshElement targetMeshElement = targetMesh.Elements[i];
-        AddTarget(targetMeshElement.XCenter, targetMeshElement.YCenter);
+        SetTargetSize(targetMesh.NumberOfElements);
+        for (int i = 0; i < targetMesh.NumberOfElements; i++)
+        {
+          MeshElement targetMeshElement = targetMesh.Elements[i];
+          AddTarget(targetMeshElement.XCenter, targetMeshElement.YCenter);
+        }
+      }
+      else
+      {
+        SetTargetSize(targetMesh.NumberOfNodes);
+
+        for (int i = 0; i < targetMesh.NumberOfNodes; i++)
+        {
+          MeshNode targetMeshNode = targetMesh.Nodes[i];
+          AddTarget(targetMeshNode.X, targetMeshNode.Y);
+        }
       }
     }
 
@@ -153,8 +297,12 @@ namespace DHI.Mesh
     /// </summary>
     public void SetTargetSize(int targetSize)
     {
-      SetupNodeInterpolation();
-      _targets = new List<InterPData>(targetSize);
+      if (_sourceType.HasFlag(MeshValueType.Elements))
+        SetupElmtToNodeInterpolation();
+      if (NodeValueInterpolation)
+        _targetsNode = new List<InterpNodeData>(targetSize);
+      if (ElmtNodeValueInterpolation)
+        _targetsElmtNode = new List<InterpElmtNode.Weights>(targetSize);
     }
 
     /// <summary>
@@ -162,114 +310,58 @@ namespace DHI.Mesh
     /// </summary>
     public void AddTarget(double x, double y)
     {
-      if (_targets == null)
-        _targets = new List<InterPData>();
-
       if (_mesh == null)
       {
         AddSTarget(x, y);
         return;
       }
 
-      if (_searcher == null)
-      {
-        _searcher = new MeshSearcher(_mesh);
-        _searcher.SetupElementSearch();
-      }
-
-      InterPData interpData = new InterPData();
-      // Setting "out-of-bounds" index
-      interpData.Element1Index = -1;
-
       // Find element that includes the (x,y) coordinate
       MeshElement element = _searcher.FindElement(x, y);
 
-      // Check if element has been found, i.e. includes the (x,y) point
-      if (element != null)
+      // Setup interpolation from node values
+      if (NodeValueInterpolation)
       {
-        bool found = false;
-        interpData.Element1Index = element.Index;
-
-        // Check which face the point belongs to, and which "side" of the face
-        bool isQuad = element.IsQuadrilateral();
-        int numFaces = isQuad ? 4 : 3;
-        for (int j = 0; j < numFaces; j++)
+        InterpNodeData interp;
+        // Check if element has been found, i.e. includes the (x,y) point
+        if (element != null)
         {
-          MeshFace elementFace = element.Faces[j];
-          // From the element (x,y), looking towards the face, 
-          // figure out wich node is right and which is left.
-          MeshNode rightNode, leftNode;
-          if (elementFace.LeftElement == element)
+          var nodes = element.Nodes;
+          if (nodes.Count == 3)
           {
-            rightNode = elementFace.FromNode;
-            leftNode  = elementFace.ToNode;
+            var weights = InterpTriangle.InterpolationWeights(x, y, nodes);
+            interp = new InterpNodeData(element.Index, weights.w1, weights.w2, weights.w3);
+          }
+          else if (nodes.Count == 4)
+          {
+            var weights = InterpQuadrangle.InterpolationWeights(x, y, nodes);
+            interp = new InterpNodeData(element.Index, weights.dx, weights.dy);
           }
           else
-          {
-            rightNode = elementFace.ToNode;
-            leftNode  = elementFace.FromNode;
-          }
-
-          double elementXCenter = element.XCenter;
-          double elementYCenter = element.YCenter;
-          double rightNodeX     = rightNode.X;
-          double rightNodeY     = rightNode.Y;
-          double leftNodeX      = leftNode.X;
-          double leftNodeY      = leftNode.Y;
-
-          // Find also the element on the other side of the face
-          double otherElementX, otherElementY;
-          MeshElement otherElement = elementFace.OtherElement(element);
-          if (otherElement != null)
-          {
-            otherElementX = otherElement.XCenter;
-            otherElementY = otherElement.YCenter;
-            interpData.Element2Index = otherElement.Index;
-          }
-          else
-          {
-            // No other element - boundary face, use center of face.
-            otherElementX = 0.5 * (rightNodeX + leftNodeX);
-            otherElementY = 0.5 * (rightNodeY + leftNodeY);
-            // Use "itself" as element-2
-            interpData.Element2Index = element.Index;
-          }
-
-
-          // Check if point is on the right side of the line between element and other-element
-          if (MeshExtensions.IsPointInsideLines(x, y, elementXCenter, elementYCenter, rightNodeX, rightNodeY, otherElementX, otherElementY))
-          {
-            (double w1, double w2, double w3) = MeshExtensions.InterpolationWeights(x, y, elementXCenter, elementYCenter, rightNodeX, rightNodeY, otherElementX, otherElementY);
-            interpData.NodeIndex = rightNode.Index;
-            interpData.Element1Weight = w1;
-            interpData.NodeWeight     = w2;
-            interpData.Element2Weight = w3;
-            found = true;
-            break;
-          }
-          // Check if point is on the left side of the line between element and other-element
-          if (MeshExtensions.IsPointInsideLines(x, y, elementXCenter, elementYCenter, otherElementX, otherElementY, leftNodeX, leftNodeY))
-          {
-            (double w1, double w2, double w3) = MeshExtensions.InterpolationWeights(x, y, elementXCenter, elementYCenter, otherElementX, otherElementY, leftNodeX, leftNodeY);
-            interpData.NodeIndex = leftNode.Index;
-            interpData.Element1Weight = w1;
-            interpData.Element2Weight = w2;
-            interpData.NodeWeight = w3;
-            found = true;
-            break;
-          }
+            interp = InterpNodeData.Undefined();
         }
+        else
+          interp = InterpNodeData.Undefined();
 
-        if (!found) // Should never happen, but just in case
-        {
-          interpData.Element1Weight = 1;
-          interpData.Element2Weight = 0;
-          interpData.NodeWeight     = 0;
-          interpData.Element2Index  = element.Index;
-          interpData.NodeIndex      = element.Nodes[0].Index;
-        }
+        if (_targetsNode == null)
+          _targetsNode = new List<InterpNodeData>();
+        _targetsNode.Add(interp);
       }
-      _targets.Add(interpData);
+
+      // Setup interpolation from element+node values
+      if (ElmtNodeValueInterpolation)
+      {
+        InterpElmtNode.Weights weights;
+        // Check if element has been found, i.e. includes the (x,y) point
+        if (element != null)
+          weights = InterpElmtNode.InterpolationWeights(x, y, element);
+        else
+          weights = InterpElmtNode.Undefined();
+
+        if (_targetsElmtNode == null)
+          _targetsElmtNode = new List<InterpElmtNode.Weights>();
+        _targetsElmtNode.Add(weights);
+      }
     }
 
   }

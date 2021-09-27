@@ -514,7 +514,7 @@ namespace DHI.Mesh
       tw.Close();
     }
 
-    internal static MeshFile Create(MeshUnit zUnit, string wktString, int[] nodeIds, double[] x, double[] y, double[] z, int[] nodeCode, int[] elmtIds, int[] elmtTypes, int[][] connectivity)
+    public static MeshFile Create(MeshUnit zUnit, string wktString, int[] nodeIds, double[] x, double[] y, double[] z, int[] nodeCode, int[] elmtIds, int[] elmtTypes, int[][] connectivity)
     {
       MeshFile res = new MeshFile();
       res._zUnit = zUnit;

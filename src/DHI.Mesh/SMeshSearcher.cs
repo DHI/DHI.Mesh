@@ -17,6 +17,8 @@ namespace DHI.Mesh
   /// </summary>
   public class SMeshSearcher
   {
+    public double Tolerance { get; set; } = 1e-3;
+
     private SMeshData _mesh;
 
 #if NTS173
@@ -71,6 +73,7 @@ namespace DHI.Mesh
     {
       // Find potential elements for (x,y) point
       Envelope targetEnvelope = new Envelope(x, x, y, y);
+      targetEnvelope.ExpandBy(Tolerance);
 
 #if NTS173
       IList potentialSourceElmts = _elementSearchTree.Query(targetEnvelope);
@@ -89,6 +92,23 @@ namespace DHI.Mesh
 
         // Check if element includes the (x,y) point
         if (_mesh.Includes(element, x, y))
+          return element;
+      }
+
+      if (Tolerance <= 0)
+        return -1;
+
+      // Try again, now with tolerance
+      for (int i = 0; i < potentialSourceElmts.Count; i++)
+      {
+#if NTS173
+        int element = (int)potentialSourceElmts[i];
+#else
+        int element = potentialSourceElmts[i];
+#endif
+
+        // Check if element includes the (x,y) point
+        if (_mesh.Includes(element, x, y, Tolerance))
           return element;
       }
 

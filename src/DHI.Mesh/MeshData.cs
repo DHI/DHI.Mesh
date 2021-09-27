@@ -4,7 +4,6 @@ using CMeshFace=DHI.Mesh.MeshFace;
 
 namespace DHI.Mesh
 {
-
   /// <summary>
   /// A mesh, consisting of triangles and quadrilaterals elements.
   /// <para>

@@ -62,6 +62,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="InterpQuadrangleTests.cs" />
+    <Compile Include="InterpTriangleTests.cs" />
     <Compile Include="MeshBoundaryTests.cs" />
     <Compile Include="MeshDataTests.cs" />
     <Compile Include="MeshInterpolatorTests.cs" />
