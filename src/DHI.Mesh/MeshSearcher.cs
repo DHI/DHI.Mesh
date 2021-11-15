@@ -108,6 +108,10 @@ namespace DHI.Mesh
             Envelope targetEnvelope = polygon.Boundary.EnvelopeInternal;
             GeometryFactory gm = new GeometryFactory();
             IList<(MeshElement, double)> result = new List<(MeshElement, double)>();
+            if(_elementSearchTree == null)
+            {
+                SetupElementSearch();
+            }
 
 #if NTS173
       IList potentialSourceElmts = _elementSearchTree.Query(targetEnvelope);
@@ -123,9 +127,13 @@ namespace DHI.Mesh
 #else
                 MeshElement element = potentialSourceElmts[i];
 #endif
-                Coordinate[] coordinates = element.Nodes
+                var coordinates = element.Nodes
                     .Select(node => new Coordinate(node.X, node.Y, node.Z))
-                    .ToArray();
+                    .ToList();
+                
+                if(coordinates.First() != coordinates.Last())
+                    coordinates.Add(coordinates.First());
+
                 IPolygon elementPolygon = gm.CreatePolygon(coordinates.ToArray());
 
                 if (elementPolygon.Contains(polygon))
