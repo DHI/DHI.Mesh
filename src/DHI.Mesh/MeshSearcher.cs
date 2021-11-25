@@ -1,16 +1,19 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using GeoAPI.Geometries;
-using NetTopologySuite.Geometries;
 #if NTS173
 using GisSharpBlog.NetTopologySuite.Geometries;
 using GisSharpBlog.NetTopologySuite.Index.Strtree;
+using SearchTreeType = GisSharpBlog.NetTopologySuite.Index.Strtree.STRtree;
 #else
-using NetTopologySuite.Index.Strtree;
+// Quadtree is faster initializing, while STRtree is faster in searching
+using SearchTreeType = NetTopologySuite.Index.Quadtree.Quadtree<DHI.Mesh.MeshElement>;
+//using SearchTreeType = NetTopologySuite.Index.Strtree.STRtree<DHI.Mesh.MeshElement>;
 #endif
 
 namespace DHI.Mesh
 {
+
+
   /// <summary>
   /// Search class for searching for elements (and eventually also nearest nodes)
   /// <para>
@@ -19,13 +22,13 @@ namespace DHI.Mesh
   /// </summary>
   public class MeshSearcher
   {
-    private MeshData _mesh;
+    /// <summary>
+    /// Tolerance, when searching for elements 
+    /// </summary>
+    public double Tolerance { get; set; } = 1e-3;
 
-#if NTS173
-    private STRtree _elementSearchTree;
-#else
-    private STRtree<MeshElement> _elementSearchTree;
-#endif
+    private MeshData _mesh;
+    private SearchTreeType _elementSearchTree;
 
     /// <summary>
     /// Create searcher for provided <paramref name="mesh"/>
@@ -40,24 +43,19 @@ namespace DHI.Mesh
     /// </summary>
     public void SetupElementSearch()
     {
-#if NTS173
-      _elementSearchTree = new STRtree();
-#else
-      _elementSearchTree = new STRtree<MeshElement>();
-#endif
+      _elementSearchTree = new SearchTreeType();
+
       for (int i = 0; i < _mesh.Elements.Count; i++)
       {
         MeshElement element = _mesh.Elements[i];
-        double      x       = element.Nodes[0].X;
-        double      y       = element.Nodes[0].Y;
-        Envelope    extent  = new Envelope(x, x, y, y);
-        for (int j = 1; j < element.Nodes.Count; j++)
-        {
-          extent.ExpandToInclude(element.Nodes[j].X, element.Nodes[j].Y);
-        }
+        Envelope extent = element.EnvelopeInternal();
         _elementSearchTree.Insert(extent, element);
       }
+      // When using STRtree, call this method here
+      //_elementSearchTree.Build();
     }
+
+
 
     /// <summary>
     /// Find element containing (x,y) coordinate. Returns null if no element found.
@@ -69,10 +67,10 @@ namespace DHI.Mesh
     public MeshElement FindElement(double x, double y)
     {
       // Find potential elements for (x,y) point
-      Envelope targetEnvelope       = new Envelope(x, x, y, y);
+      Envelope targetEnvelope = new Envelope(x, x, y, y);
 
 #if NTS173
-      IList potentialSourceElmts = _elementSearchTree.Query(targetEnvelope);
+      IList elements = _elementSearchTree.Query(targetEnvelope);
 #else
       IList<MeshElement> potentialSourceElmts = _elementSearchTree.Query(targetEnvelope);
 #endif
@@ -81,7 +79,7 @@ namespace DHI.Mesh
       for (int i = 0; i < potentialSourceElmts.Count; i++)
       {
 #if NTS173
-        MeshElement element = (MeshElement)potentialSourceElmts[i];
+        MeshElement element = (MeshElement)elements[i];
 #else
         MeshElement element = potentialSourceElmts[i];
 #endif
@@ -91,79 +89,91 @@ namespace DHI.Mesh
           return element;
       }
 
+      if (Tolerance <= 0)
+        return null;
+
+      // Try again, now with tolerance
+      for (int i = 0; i < potentialSourceElmts.Count; i++)
+      {
+#if NTS173
+        MeshElement element = (MeshElement)elements[i];
+#else
+        MeshElement element = potentialSourceElmts[i];
+#endif
+
+        // Check if element includes the (x,y) point
+        if (element.Includes(x, y, Tolerance))
+          return element;
+      }
+
       return null;
     }
 
-        /// <summary>
-        /// Find elements either contained, containing or intersecting polygon. The Weight is equal to the proportinal 
-        /// area each element intersects with the polygon.
-        /// <para>
-        /// If polygon is totally contained within one mesh element, then 1 element is returned with weight 1.
-        /// If polygon partially falls outside of the grid, only elements within grid are returned.
-        /// </para>
-        /// </summary>
-        public IList<(MeshElement,double)> FindElementsAndWeight(IPolygon polygon)
-        {
-            // Find potential elements for (x,y) point
-            Envelope targetEnvelope = polygon.Boundary.EnvelopeInternal;
-            GeometryFactory gm = new GeometryFactory();
-            IList<(MeshElement, double)> result = new List<(MeshElement, double)>();
-            if(_elementSearchTree == null)
-            {
-                SetupElementSearch();
-            }
-
-#if NTS173
-      IList potentialSourceElmts = _elementSearchTree.Query(targetEnvelope);
-#else
-            IList<MeshElement> potentialSourceElmts = _elementSearchTree.Query(targetEnvelope);
-#endif
-
-            // Loop over all potential elements
-            for (int i = 0; i < potentialSourceElmts.Count; i++)
-            {
-#if NTS173
-        MeshElement element = (MeshElement)potentialSourceElmts[i];
-#else
-                MeshElement element = potentialSourceElmts[i];
-#endif
-                var coordinates = element.Nodes
-                    .Select(node => new Coordinate(node.X, node.Y, node.Z))
-                    .ToList();
-                
-                if(coordinates.First() != coordinates.Last())
-                    coordinates.Add(coordinates.First());
-
-                IPolygon elementPolygon = gm.CreatePolygon(coordinates.ToArray());
-
-                if (elementPolygon.Contains(polygon))
-                {
-                    result.Add((element, 1.0));
-                    continue;
-                }
-
-                if (elementPolygon.Intersects(polygon))
-                {
-                    result.Add((element, elementPolygon.Intersection(polygon).Area));
-                    continue;
-                }
-
-                if (polygon.Contains(elementPolygon))
-                {
-                    result.Add((element, elementPolygon.Area));
-                }
-            }
-            if (result.Count == 0)
-            {
-                return null;
-            }
-
-            var area = result.Sum(e => e.Item2);
-            for (int i = 0; i < result.Count; i++)
-            {
-                result[i] = (result[i].Item1, result[i].Item2 / area);
-            }
-            return result.Count == 0 ? null : result;
-        }
+    /// <summary>
+    /// Queries and returns elements which are (fully or partly) inside or close to the search envelope.
+    /// <para>
+    /// Note: There is no guarantee that the element lies inside the search envelope;
+    /// this is a fast first filtering of elements, providing all "nearby" elements.
+    /// </para>
+    /// </summary>
+    /// <remarks>
+    /// The elements returned are elements whose envelope <b>may</b> intersect the search Envelope.
+    /// Elements with non-intersecting envelopes may be returned as well.
+    /// In most situations there will be many elements which are not returned,
+    /// thus providing improved performance over a simple linear search over all elements.
+    /// </remarks>
+    /// <param name="envelope">The search envelope, the desired query area.</param>
+    /// <returns>A List of elements which may intersect the search envelope</returns>
+    public IList<MeshElement> QueryElements(Envelope envelope)
+    {
+      return _elementSearchTree.Query(envelope);
     }
+
+    /// <summary>
+    /// Find elements either contained, containing or intersecting polygon.
+    /// <para>
+    /// If no elements are found, an empty list is returned.
+    /// </para>
+    /// </summary>
+    public IList<MeshElement> FindElements(IPolygon polygon)
+    {
+      if (_elementSearchTree == null)
+      {
+        SetupElementSearch();
+      }
+
+      Envelope targetEnvelope = polygon.EnvelopeInternal;
+      
+#if NTS173
+      IList elements = _elementSearchTree.Query(targetEnvelope);
+#else
+      IList<MeshElement> potentialElmts = _elementSearchTree.Query(targetEnvelope);
+#endif
+
+      List<MeshElement> result = new List<MeshElement>();
+
+      // Loop over all potential elements
+      for (int i = 0; i < potentialElmts.Count; i++)
+      {
+#if NTS173
+        MeshElement element = (MeshElement)elements[i];
+#else
+        MeshElement element = potentialElmts[i];
+#endif
+
+        // Fast-lane check: When there is no overlap even by the envelopes
+        if (!targetEnvelope.Intersects(element.EnvelopeInternal()))
+          continue;
+
+        // More detailed check for actual overlap
+        IPolygon elementPolygon = element.ToPolygon();
+        if (elementPolygon.Intersects(polygon))
+        {
+          result.Add(element);
+        }
+      }
+
+      return result;
+    }
+  }
 }

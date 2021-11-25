@@ -20,7 +20,7 @@ namespace DHI.Mesh
   /// "MIKE SDK documentation index".
   /// </para>
   /// </summary>
-  public class MeshData
+  public class MeshData : IMeshData
   {
     #region Geometry region
 
