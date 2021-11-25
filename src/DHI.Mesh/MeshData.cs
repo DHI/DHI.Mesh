@@ -134,6 +134,24 @@ namespace DHI.Mesh
     }
 
     /// <summary>
+    /// In case the mesh has been modified and the object indices are no longer correct,
+    /// this method will recalculate the index numbers for all mesh objects, as e.g.
+    /// <see cref="MeshNode.Index"/> and <see cref="MeshElement.Index"/>.
+    /// </summary>
+    public void ReIndex()
+    {
+      for (int i = 0; i < Nodes.Count; i++)
+      {
+        Nodes[i].Index = i;
+      }
+
+      for (int ielmt = 0; ielmt < Elements.Count; ielmt++)
+      {
+        Elements[ielmt].Index = ielmt;
+      }
+    }
+
+    /// <summary>
     /// Build derived mesh data, the <see cref="MeshNode.Elements"/> and <see cref="MeshFace"/> lists.
     /// </summary>
     public List<string> BuildDerivedData()

@@ -375,6 +375,14 @@ namespace DHI.Mesh
     }
 
     /// <summary>
+    /// Convert a <see cref="SMeshData"/> class into a <see cref="MeshData"/> class.
+    /// </summary>
+    public static MeshData ToMesh(this SMeshData meshData)
+    {
+      return MeshData.CreateMesh(meshData.Projection, meshData.NodeIds, meshData.X, meshData.Y, meshData.Z, meshData.Code, meshData.ElementIds, meshData.ElementType, meshData.ElementTable.ToZeroBased(), meshData.ZUnit);
+    }
+
+    /// <summary>
     /// Convert a <see cref="MeshData"/> class into a <see cref="SMeshData"/> class.
     /// </summary>
     public static SMeshData ToSMesh(this MeshData meshData)
