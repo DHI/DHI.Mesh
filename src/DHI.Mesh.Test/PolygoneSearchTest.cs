@@ -15,7 +15,7 @@ namespace DHI.Mesh.Test
     [TestCase(false)]
     public void GetElementsIndicesWithWeight_PolygonWithinOneMeshElement(bool smesh)
     {
-      var dfsufilepath = UnitTestHelper.TestDataDir + @"TestingDfsu1.dfsu";
+      var dfsufilepath = UnitTestHelper.TestDataDir + @"DfsuTest.dfsu";
       var mesh = GetMesh(dfsufilepath, smesh);
       var gf = new GeometryFactory();
 
@@ -59,7 +59,7 @@ namespace DHI.Mesh.Test
     [TestCase(false)]
     public void GetElementsIndicesWithWeight_PolygonAccrossMeshElement(bool smesh)
     {
-      var dfsufilepath = UnitTestHelper.TestDataDir + @"TestingDfsu1.dfsu";
+      var dfsufilepath = UnitTestHelper.TestDataDir + @"DfsuTest.dfsu";
       var mesh = GetMesh(dfsufilepath, smesh);
       var gf = new GeometryFactory();
 
@@ -93,7 +93,7 @@ namespace DHI.Mesh.Test
     [TestCase(false)]
     public void GetElementsIndicesWithWeight_PolygonEnveloppingAMeshElement(bool smesh)
     {
-      var dfsufilepath = UnitTestHelper.TestDataDir + @"TestingDfsu1.dfsu";
+      var dfsufilepath = UnitTestHelper.TestDataDir + @"DfsuTest.dfsu";
       var mesh = GetMesh(dfsufilepath, smesh);
       var gf = new GeometryFactory();
 
@@ -131,7 +131,7 @@ namespace DHI.Mesh.Test
     [TestCase(false)]
     public void GetElementsIndicesWithWeight_PolygonPartiallyOutside(bool smesh)
     {
-      var dfsufilepath = UnitTestHelper.TestDataDir + @"TestingDfsu1.dfsu";
+      var dfsufilepath = UnitTestHelper.TestDataDir + @"DfsuTest.dfsu";
       var mesh = GetMesh(dfsufilepath, smesh);
       var gf = new GeometryFactory();
 
@@ -165,7 +165,7 @@ namespace DHI.Mesh.Test
     [TestCase(false)]
     public void GetElementsIndicesWithWeight_PolygonOutside(bool smesh)
     {
-      var dfsufilepath = UnitTestHelper.TestDataDir + @"TestingDfsu1.dfsu";
+      var dfsufilepath = UnitTestHelper.TestDataDir + @"DfsuTest.dfsu";
       var mesh = GetMesh(dfsufilepath, smesh);
       var gf = new GeometryFactory();
 

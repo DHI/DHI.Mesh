@@ -70,7 +70,7 @@ namespace DHI.Mesh.Test
 
     [Test]
     [Explicit("Run Manual")]
-    public void BoundaryListMeshMedium()
+    public void BoundaryListMeshMediumDfsuTest()
     {
       string triMesh = @"C:\Work\DHIGitHub\DHI.Mesh\TestData\MaxWD-PostDev.dfsu";
       if (!File.Exists(triMesh)) Assert.Ignore("Not found: " + triMesh);
@@ -79,7 +79,7 @@ namespace DHI.Mesh.Test
 
     [Test]
     [Explicit("Run Manual")]
-    public void BoundaryListSMeshMedium()
+    public void BoundaryListSMeshMediumDfsuTest()
     {
       string triMesh = @"C:\Work\DHIGitHub\DHI.Mesh\TestData\MaxWD-PostDev.dfsu";
       if (!File.Exists(triMesh)) Assert.Ignore("Not found: " + triMesh);
@@ -88,7 +88,7 @@ namespace DHI.Mesh.Test
 
     [Test]
     [Explicit("Run Manual")]
-    public void BoundaryListMeshBig()
+    public void BoundaryListMeshBigDfsuTest()
     {
       string triMesh = @"C:\Work\TestData\BigDfsu.dfsu";
       if (!File.Exists(triMesh)) Assert.Ignore("Not found: "+triMesh);
@@ -97,7 +97,7 @@ namespace DHI.Mesh.Test
 
     [Test]
     [Explicit("Run Manual")]
-    public void BoundaryListSMeshBig()
+    public void BoundaryListSMeshBigDfsuTest()
     {
       string triMesh = @"C:\Work\TestData\BigDfsu.dfsu";
       if (!File.Exists(triMesh)) Assert.Ignore("Not found: " + triMesh);
