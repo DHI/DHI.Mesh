@@ -236,16 +236,16 @@ namespace DHI.Mesh.Test
     [Test]
     public void DeleteValueVisualDfs2Test()
     {
-      DeleteVAlueVisualDfs2Test(true);
-      DeleteVAlueVisualDfs2Test(false);
+      DeleteValueVisualDfs2Test(true);
+      DeleteValueVisualDfs2Test(false);
     }
 
     /// <summary>
-    /// Create DFS2 file with iterpolated values from the 3x3 quadrangles,
+    /// Create DFS2 file with interpolated values from the 3x3 quadrangles,
     /// with various delete values applied in each time step.
     /// </summary>
     /// <param name="centerOnly">Only use center quadrangle</param>
-    public void DeleteVAlueVisualDfs2Test(bool centerOnly)
+    public void DeleteValueVisualDfs2Test(bool centerOnly)
     {
 
       DfsFactory  factory     = new DfsFactory();

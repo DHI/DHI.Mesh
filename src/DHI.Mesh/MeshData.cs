@@ -20,7 +20,7 @@ namespace DHI.Mesh
   /// "MIKE SDK documentation index".
   /// </para>
   /// </summary>
-  public class MeshData
+  public class MeshData : IMeshData
   {
     #region Geometry region
 
@@ -131,6 +131,24 @@ namespace DHI.Mesh
 
       return meshData;
 
+    }
+
+    /// <summary>
+    /// In case the mesh has been modified and the object indices are no longer correct,
+    /// this method will recalculate the index numbers for all mesh objects, as e.g.
+    /// <see cref="MeshNode.Index"/> and <see cref="MeshElement.Index"/>.
+    /// </summary>
+    public void ReIndex()
+    {
+      for (int i = 0; i < Nodes.Count; i++)
+      {
+        Nodes[i].Index = i;
+      }
+
+      for (int ielmt = 0; ielmt < Elements.Count; ielmt++)
+      {
+        Elements[ielmt].Index = ielmt;
+      }
     }
 
     /// <summary>

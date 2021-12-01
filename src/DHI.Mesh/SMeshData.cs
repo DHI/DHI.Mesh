@@ -5,6 +5,36 @@ using CMeshFace=DHI.Mesh.SMeshFace;
 namespace DHI.Mesh
 {
   /// <summary>
+  /// Common interface for the two MeshData classes.
+  /// <para>
+  /// Included for easing unit tests.
+  /// </para>
+  /// </summary>
+  public interface IMeshData
+  {
+    /// <summary>
+    /// Projection string, in WKT format
+    /// </summary>
+    string Projection { get; set; }
+
+    /// <summary>
+    /// Unit of the z variables in the nodes and elements.
+    /// </summary>
+    MeshUnit ZUnit { get; set; }
+
+    /// <summary>
+    /// Number of nodes in the mesh.
+    /// </summary>
+    int NumberOfNodes { get; }
+
+    /// <summary>
+    /// Number of elements in the mesh
+    /// </summary>
+    int NumberOfElements { get; }
+
+  }
+
+  /// <summary>
   /// A mesh, consisting of triangles and quadrilaterals elements.
   /// <para>
   /// This SMeshData class uses low-level structures to save on memory, compared to
@@ -20,7 +50,7 @@ namespace DHI.Mesh
   /// "MIKE SDK documentation index".
   /// </para>
   /// </summary>
-  public class SMeshData
+  public class SMeshData : IMeshData
   {
     // Node variables
     private int[]    _nodeIds; // this can be null, then set default id's, starting from 1

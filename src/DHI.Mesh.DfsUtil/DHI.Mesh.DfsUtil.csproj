@@ -105,6 +105,9 @@
     <Compile Include="..\DHI.Mesh\MeshExtensions.cs">
       <Link>MeshExtensions.cs</Link>
     </Compile>
+    <Compile Include="..\DHI.Mesh\GeometryExtensions.cs">
+      <Link>GeometryExtensions.cs</Link>
+    </Compile>
     <Compile Include="..\DHI.Mesh\MeshFace.cs">
       <Link>MeshFace.cs</Link>
     </Compile>
