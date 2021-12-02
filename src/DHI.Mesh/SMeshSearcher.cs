@@ -1,14 +1,6 @@
 ﻿using System.Collections.Generic;
 using GeoAPI.Geometries;
-#if NTS173
-using GisSharpBlog.NetTopologySuite.Geometries;
-using GisSharpBlog.NetTopologySuite.Index.Strtree;
-using SearchTreeType = GisSharpBlog.NetTopologySuite.Index.Strtree.STRtree;
-#else
-// Quadtree is faster initializing, while STRtree is faster in searching
 using SearchTreeType = NetTopologySuite.Index.Quadtree.Quadtree<int>;
-//using SearchTreeType = NetTopologySuite.Index.Strtree.STRtree<int>;
-#endif
 
 namespace DHI.Mesh
 {
