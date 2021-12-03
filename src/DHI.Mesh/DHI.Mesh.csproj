@@ -10,10 +10,4 @@
     <PackageReference Include="NetTopologySuite" Version="1.15.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Reference Include="NetTopologySuite">
-      <HintPath>..\..\bin\NetTopologySuite.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-
 </Project>
