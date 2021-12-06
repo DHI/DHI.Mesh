@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
     <OutputType>exe</OutputType>
-    <Platformarget>x64</Platformarget>
+    <PlatformTarget>x64</PlatformTarget>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
 
