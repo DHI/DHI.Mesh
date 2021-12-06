@@ -58,20 +58,12 @@ namespace DHI.Mesh
       Envelope targetEnvelope = new Envelope(x, x, y, y);
       targetEnvelope.ExpandBy(Tolerance);
 
-#if NTS173
-      IList potentialSourceElmts = _elementSearchTree.Query(targetEnvelope);
-#else
       IList<int> potentialSourceElmts = _elementSearchTree.Query(targetEnvelope);
-#endif
 
       // Loop over all potential elements
       for (int i = 0; i < potentialSourceElmts.Count; i++)
       {
-#if NTS173
-        int element = (int)potentialSourceElmts[i];
-#else
         int element = potentialSourceElmts[i];
-#endif
 
         // Check if element includes the (x,y) point
         if (_mesh.Includes(element, x, y))
@@ -84,11 +76,7 @@ namespace DHI.Mesh
       // Try again, now with tolerance
       for (int i = 0; i < potentialSourceElmts.Count; i++)
       {
-#if NTS173
-        int element = (int)potentialSourceElmts[i];
-#else
         int element = potentialSourceElmts[i];
-#endif
 
         // Check if element includes the (x,y) point
         if (_mesh.Includes(element, x, y, Tolerance))
@@ -134,22 +122,14 @@ namespace DHI.Mesh
 
       Envelope targetEnvelope = polygon.EnvelopeInternal;
       
-#if NTS173
-      IList elements = _elementSearchTree.Query(targetEnvelope);
-#else
       IList<int> potentialElmts = _elementSearchTree.Query(targetEnvelope);
-#endif
 
       List<int> result = new List<int>();
 
       // Loop over all potential elements
       for (int i = 0; i < potentialElmts.Count; i++)
       {
-#if NTS173
-        MeshElement element = (MeshElement)elements[i];
-#else
         int element = potentialElmts[i];
-#endif
 
         // Fast-lane check: When there is no overlap even by the envelopes
         if (!targetEnvelope.Intersects(_mesh.ElementEnvelopeInternal(element)))
