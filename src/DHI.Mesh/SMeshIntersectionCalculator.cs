@@ -84,19 +84,11 @@ namespace DHI.Mesh
       // Find potential elements for polygon point
       Envelope targetEnvelope = polygon.EnvelopeInternal;
 
-#if NTS173
-      IList potentialElmts;
-#else
       IList<int> potentialElmts;
-#endif
       if (_searcher != null)
       {
         // Find potential elements for polygon overlap
-#if NTS173
-        potentialSourceElmts = _searcher.Query(targetEnvelope);
-#else
         potentialElmts = _searcher.QueryElements(targetEnvelope);
-#endif
       }
       else
         potentialElmts = null;
@@ -116,11 +108,7 @@ namespace DHI.Mesh
     /// </para>
     /// <param name="polygon">Polygon or multi-polygon</param>
     /// </summary>
-#if NTS173
-    public IList<ElementWeight> CalculateWeights(IPolygon polygon, IList potentialSourceElmts)
-#else
     public List<ElementWeight> CalculateWeights(IGeometry polygon, IList<int> elements)
-#endif
     {
       if (!(polygon is IMultiPolygon) && !(polygon is IPolygon))
         throw new Exception("Cannot calculate weights for geometry of type: " + polygon.GeometryType);
@@ -138,11 +126,7 @@ namespace DHI.Mesh
       int elementsCount = elements?.Count ?? _mesh.NumberOfElements;
       for (int i = 0; i < elementsCount; i++)
       {
-#if NTS173
-        int element = elements != null ? (int)elements[i] : i;
-#else
         int element = elements != null ? elements[i] : i;
-#endif
 
         // Fast-lane check: When there is no overlap even by the envelopes
         if (!targetEnvelope.Intersects(_mesh.ElementEnvelopeInternal(element)))

@@ -19,7 +19,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;NTS173</DefineConstants>
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -63,99 +63,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\DHI.Mesh\CircularValueHandler.cs">
-      <Link>CircularValueHandler.cs</Link>
-    </Compile>
-    <Compile Include="..\DHI.Mesh\Interpolator.cs">
-      <Link>Interpolator.cs</Link>
-    </Compile>
-    <Compile Include="..\DHI.Mesh\InterpolatorDouble.cs">
-      <Link>InterpolatorDouble.cs</Link>
-    </Compile>
-    <Compile Include="..\DHI.Mesh\InterpolatorFloat.cs">
-      <Link>InterpolatorFloat.cs</Link>
-    </Compile>
-    <Compile Include="..\DHI.Mesh\InterpElmtNode.cs">
-      <Link>InterpElmtNode.cs</Link>
-    </Compile>
-    <Compile Include="..\DHI.Mesh\InterpElmtNodeSMesh.cs">
-      <Link>InterpElmtNodeSMesh.cs</Link>
-    </Compile>
-    <Compile Include="..\DHI.Mesh\InterpQuadrangle.cs">
-      <Link>InterpQuadrangle.cs</Link>
-    </Compile>
-    <Compile Include="..\DHI.Mesh\InterpTriangle.cs">
-      <Link>InterpTriangle.cs</Link>
-    </Compile>
-    <Compile Include="..\DHI.Mesh\MeshBoundary.cs">
-      <Link>MeshBoundary.cs</Link>
-    </Compile>
-    <Compile Include="..\DHI.Mesh\SMeshBoundary.cs">
-      <Link>SMeshBoundary.cs</Link>
-    </Compile>
-    <Compile Include="..\DHI.Mesh\MeshData.cs">
-      <Link>MeshData.cs</Link>
-    </Compile>
-    <Compile Include="..\DHI.Mesh\SMeshData.cs">
-      <Link>SMeshData.cs</Link>
-    </Compile>
-    <Compile Include="..\DHI.Mesh\MeshElement.cs">
-      <Link>MeshElement.cs</Link>
-    </Compile>
-    <Compile Include="..\DHI.Mesh\MeshExtensions.cs">
-      <Link>MeshExtensions.cs</Link>
-    </Compile>
-    <Compile Include="..\DHI.Mesh\GeometryExtensions.cs">
-      <Link>GeometryExtensions.cs</Link>
-    </Compile>
-    <Compile Include="..\DHI.Mesh\MeshFace.cs">
-      <Link>MeshFace.cs</Link>
-    </Compile>
-    <Compile Include="..\DHI.Mesh\SMeshFace.cs">
-      <Link>SMeshFace.cs</Link>
-    </Compile>
-    <Compile Include="..\DHI.Mesh\MeshFile.cs">
-      <Link>MeshFile.cs</Link>
-    </Compile>
-    <Compile Include="..\DHI.Mesh\MeshFileBuilder.cs">
-      <Link>MeshFileBuilder.cs</Link>
-    </Compile>
-    <Compile Include="..\DHI.Mesh\SMeshInterpolator2D.cs">
-      <Link>SMeshInterpolator2D.cs</Link>
-    </Compile>
-    <Compile Include="..\DHI.Mesh\MeshInterpolator2D.cs">
-      <Link>MeshInterpolator2D.cs</Link>
-    </Compile>
-    <Compile Include="..\DHI.Mesh\MeshInterpolator2DDouble.cs">
-      <Link>MeshInterpolator2DDouble.cs</Link>
-    </Compile>
-    <Compile Include="..\DHI.Mesh\MeshInterpolator2DFloat.cs">
-      <Link>MeshInterpolator2DFloat.cs</Link>
-    </Compile>
-    <Compile Include="..\DHI.Mesh\MeshNode.cs">
-      <Link>MeshNode.cs</Link>
-    </Compile>
-    <Compile Include="..\DHI.Mesh\MeshNodeInterpolation.cs">
-      <Link>MeshNodeInterpolation.cs</Link>
-    </Compile>
-    <Compile Include="..\DHI.Mesh\SMeshNodeInterpolation.cs">
-      <Link>SMeshNodeInterpolation.cs</Link>
-    </Compile>
-    <Compile Include="..\DHI.Mesh\MeshSearcher.cs">
-      <Link>MeshSearcher.cs</Link>
-    </Compile>
-    <Compile Include="..\DHI.Mesh\SMeshSearcher.cs">
-      <Link>SMeshSearcher.cs</Link>
-    </Compile>
-    <Compile Include="..\DHI.Mesh\SubMesh.cs">
-      <Link>SubMesh.cs</Link>
-    </Compile>
-    <Compile Include="..\DHI.Mesh\SSubMesh.cs">
-      <Link>SSubMesh.cs</Link>
-    </Compile>
-    <Compile Include="..\DHI.Mesh\MeshUnit.cs">
-      <Link>MeshUnit.cs</Link>
-    </Compile>
     <Compile Include="DfsuInterp.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -167,9 +74,12 @@
     <PackageReference Include="DHI.DFS">
       <Version>18.0.0</Version>
     </PackageReference>
-    <PackageReference Include="NetTopologySuite">
-      <Version>1.15.3</Version>
-    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DHI.Mesh\DHI.Mesh.csproj">
+      <Project>{cb530b16-5fb8-44f3-be57-45d29c1f0e89}</Project>
+      <Name>DHI.Mesh</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

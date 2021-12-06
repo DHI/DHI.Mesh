@@ -1,14 +1,6 @@
 ﻿using System.Collections.Generic;
 using GeoAPI.Geometries;
-#if NTS173
-using GisSharpBlog.NetTopologySuite.Geometries;
-using GisSharpBlog.NetTopologySuite.Index.Strtree;
-using SearchTreeType = GisSharpBlog.NetTopologySuite.Index.Strtree.STRtree;
-#else
-// Quadtree is faster initializing, while STRtree is faster in searching
 using SearchTreeType = NetTopologySuite.Index.Quadtree.Quadtree<DHI.Mesh.MeshElement>;
-//using SearchTreeType = NetTopologySuite.Index.Strtree.STRtree<DHI.Mesh.MeshElement>;
-#endif
 
 namespace DHI.Mesh
 {
@@ -69,20 +61,12 @@ namespace DHI.Mesh
       // Find potential elements for (x,y) point
       Envelope targetEnvelope = new Envelope(x, x, y, y);
 
-#if NTS173
-      IList elements = _elementSearchTree.Query(targetEnvelope);
-#else
       IList<MeshElement> potentialSourceElmts = _elementSearchTree.Query(targetEnvelope);
-#endif
 
       // Loop over all potential elements
       for (int i = 0; i < potentialSourceElmts.Count; i++)
       {
-#if NTS173
-        MeshElement element = (MeshElement)elements[i];
-#else
         MeshElement element = potentialSourceElmts[i];
-#endif
 
         // Check if element includes the (x,y) point
         if (element.Includes(x, y))
@@ -95,11 +79,7 @@ namespace DHI.Mesh
       // Try again, now with tolerance
       for (int i = 0; i < potentialSourceElmts.Count; i++)
       {
-#if NTS173
-        MeshElement element = (MeshElement)elements[i];
-#else
         MeshElement element = potentialSourceElmts[i];
-#endif
 
         // Check if element includes the (x,y) point
         if (element.Includes(x, y, Tolerance))
@@ -144,22 +124,14 @@ namespace DHI.Mesh
 
       Envelope targetEnvelope = polygon.EnvelopeInternal;
       
-#if NTS173
-      IList elements = _elementSearchTree.Query(targetEnvelope);
-#else
       IList<MeshElement> potentialElmts = _elementSearchTree.Query(targetEnvelope);
-#endif
 
       List<MeshElement> result = new List<MeshElement>();
 
       // Loop over all potential elements
       for (int i = 0; i < potentialElmts.Count; i++)
       {
-#if NTS173
-        MeshElement element = (MeshElement)elements[i];
-#else
         MeshElement element = potentialElmts[i];
-#endif
 
         // Fast-lane check: When there is no overlap even by the envelopes
         if (!targetEnvelope.Intersects(element.EnvelopeInternal()))
