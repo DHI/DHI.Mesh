@@ -83,7 +83,7 @@ namespace DHI.Mesh
 
     /// <summary>
     /// Calculate interpolation weights for the point (x,y) inside the triangle defined by
-    /// the nodes in <paramref name="elmtNodes"/>.
+    /// the nodes in <paramref name="smesh"/>.
     ///<para>
     /// Check
     /// <see cref="InterpolationWeights(double,double,double,double,double,double,double,double)"/>

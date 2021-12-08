@@ -26,7 +26,7 @@ namespace DHI.Mesh
   /// target points accordingly.
   /// </para>
   /// <para>
-  /// <see cref="InterpolateNodeToXY"/> or <see cref="InterpolateElmtToXY"/>.
+  /// <see cref="InterpolateNodeToXY(double, double, double[])"/> or <see cref="InterpolateElmtToXY(double, double, double[], double[])"/>.
   /// </para>
   /// </summary>
   public partial class MeshInterpolator2D

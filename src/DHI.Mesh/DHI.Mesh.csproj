@@ -1,12 +1,42 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Platforms>AnyCPU;x64</Platforms>
+    <DefaultItemExcludes>$(DefaultItemExcludes);nuget\*.log</DefaultItemExcludes>
+    <NoWarn>1591</NoWarn>
+    <PackageId>DHI.Mesh</PackageId>
+    <Version>1.0.0-rc02</Version>
+    <PackageReleaseNotes></PackageReleaseNotes>
+    <Company>DHI</Company>
+    <Authors>dhigroup</Authors>
+    <PackageLicenseExpression>BSD-3-Clause</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/DHI/DHI.Mesh/blob/master/README.md</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/DHI/DHI.Mesh</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <Description>Library supporting various operations on flexible meshes.</Description>
+    <PackageTags></PackageTags>
+    <PackageIcon>ds-icon-64.png</PackageIcon>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\DHI.Mesh.xml</DocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="NetTopologySuite" Version="1.15.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="nuget\ds-icon-64.png" Pack="true" PackagePath="" />
   </ItemGroup>
 
 </Project>

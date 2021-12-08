@@ -4,7 +4,7 @@
   {
 
     /// <summary>
-    /// Calculate interpolation weights for the point (x,y) inside the <see cref="element"/>"/>
+    /// Calculate interpolation weights for the point (x,y) inside the element"/>
     /// <para>
     /// The weights returned can be used to calculate a value v at the point (x,y) using the
     /// <code>GetValue</code> methods

@@ -107,6 +107,7 @@ namespace DHI.Mesh
     /// If polygon partially falls outside of the grid, only elements within grid are returned.
     /// </para>
     /// <param name="polygon">Polygon or multi-polygon</param>
+    /// <param name="elements">List of elements</param>
     /// </summary>
     public List<ElementWeight> CalculateWeights(IGeometry polygon, IList<int> elements)
     {

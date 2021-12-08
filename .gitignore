@@ -4,6 +4,7 @@ _ReSharper.Caches
 bin
 obj
 *csproj.user
+*.log
 *DotSettings.user
 /TestData/test_*
 /TestDataRef/test_*

@@ -319,7 +319,7 @@ namespace DHI.Mesh
     }
 
     /// <summary>
-    /// Create and add a face - special version for <see cref="MeshBoundaryExtensions.GetBoundaryFaces"/>
+    /// Create and add a face - special version for <see cref="MeshBoundaryExtensions.GetBoundaryFaces(MeshData)"/>
     /// <para>
     /// A face is only "added once", i.e. when two elements share the face, it is found twice,
     /// once defined as "toNode"-"fromNode" and once as "fromNode"-"toNode". The second time,
