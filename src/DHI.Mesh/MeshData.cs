@@ -20,40 +20,9 @@ namespace DHI.Mesh
   /// "MIKE SDK documentation index".
   /// </para>
   /// </summary>
-  public class MeshData : IMeshData
+  public class MeshData : MeshDataBase, IMeshData
   {
     #region Geometry region
-
-    /// <summary>
-    /// Projection string, in WKT format
-    /// </summary>
-    public string Projection { get; set; }
-
-    /// <summary>
-    /// Unit of the z variables in the nodes and elements.
-    /// </summary>
-    public MeshUnit ZUnit { get; set; }
-
-    /// <summary>
-    /// Number of nodes in the mesh.
-    /// </summary>
-    public int NumberOfNodes { get { return (Nodes.Count); } }
-
-    /// <summary>
-    /// Number of elements in the mesh
-    /// </summary>
-    public int NumberOfElements { get { return (Elements.Count); } }
-
-
-    /// <summary>
-    /// Nodes in the mesh.
-    /// </summary>
-    public List<MeshNode> Nodes { get; set; }
-    /// <summary>
-    /// Elements in the mesh.
-    /// </summary>
-    public List<MeshElement> Elements { get; set; }
-
     /// <summary>
     /// Element faces.
     /// <para>

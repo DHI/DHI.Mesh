@@ -177,9 +177,9 @@ namespace DHI.Mesh.Test
       Assert.IsNull(search1);
     }
 
-    private IMeshData GetMesh(string dfsufilepath, bool smesh)
+    private IMeshDataInfo GetMesh(string dfsufilepath, bool smesh)
     {
-      IMeshData mesh;
+      IMeshDataInfo mesh;
 
       DfsuFile file = DfsFileFactory.DfsuFileOpen(dfsufilepath);
       if (smesh)

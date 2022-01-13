@@ -4,35 +4,6 @@ using CMeshFace=DHI.Mesh.SMeshFace;
 
 namespace DHI.Mesh
 {
-  /// <summary>
-  /// Common interface for the two MeshData classes.
-  /// <para>
-  /// Included for easing unit tests.
-  /// </para>
-  /// </summary>
-  public interface IMeshData
-  {
-    /// <summary>
-    /// Projection string, in WKT format
-    /// </summary>
-    string Projection { get; set; }
-
-    /// <summary>
-    /// Unit of the z variables in the nodes and elements.
-    /// </summary>
-    MeshUnit ZUnit { get; set; }
-
-    /// <summary>
-    /// Number of nodes in the mesh.
-    /// </summary>
-    int NumberOfNodes { get; }
-
-    /// <summary>
-    /// Number of elements in the mesh
-    /// </summary>
-    int NumberOfElements { get; }
-
-  }
 
   /// <summary>
   /// A mesh, consisting of triangles and quadrilaterals elements.
@@ -50,7 +21,7 @@ namespace DHI.Mesh
   /// "MIKE SDK documentation index".
   /// </para>
   /// </summary>
-  public class SMeshData : IMeshData
+  public class SMeshData : SMeshDataBase, IMeshDataInfo
   {
     // Node variables
     private int[]    _nodeIds; // this can be null, then set default id's, starting from 1
@@ -64,26 +35,15 @@ namespace DHI.Mesh
     private int[]   _elementType;
     private int[][] _connectivity;
 
-
-    /// <summary>
-    /// Projection string, in WKT format
-    /// </summary>
-    public string Projection { get; set; }
-
-    /// <summary>
-    /// Unit of the z variables in the nodes and elements.
-    /// </summary>
-    public MeshUnit ZUnit { get; set; }
-
     /// <summary>
     /// Number of nodes in the mesh.
     /// </summary>
-    public int NumberOfNodes { get { return (_nodeIds.Length); } }
+    public override int NumberOfNodes { get { return (_nodeIds.Length); } }
 
     /// <summary>
     /// Number of elements in the mesh
     /// </summary>
-    public int NumberOfElements { get { return (_elementIds.Length); } }
+    public override int NumberOfElements { get { return (_elementIds.Length); } }
 
 
     /// <summary>
@@ -98,7 +58,7 @@ namespace DHI.Mesh
     /// can make some tools stop working.
     /// </para>
     /// </summary>
-    public int[] NodeIds
+    public override int[] NodeIds
     {
       get { return _nodeIds; }
       set
@@ -117,7 +77,7 @@ namespace DHI.Mesh
     /// length as the original one.
     /// </para>
     /// </summary>
-    public double[] X
+    public override double[] X
     {
       get { return _x; }
       set
@@ -136,7 +96,7 @@ namespace DHI.Mesh
     /// length as the original one.
     /// </para>
     /// </summary>
-    public double[] Y
+    public override double[] Y
     {
       get { return _y; }
       set
@@ -155,7 +115,7 @@ namespace DHI.Mesh
     /// length as the original one.
     /// </para>
     /// </summary>
-    public double[] Z
+    public override double[] Z
     {
       get { return _z; }
       set
@@ -174,7 +134,7 @@ namespace DHI.Mesh
     /// length as the original one.
     /// </para>
     /// </summary>
-    public int[] Code
+    public override int[] Code
     {
       get { return _code; }
       set
@@ -197,7 +157,7 @@ namespace DHI.Mesh
     /// can make some tools stop working.
     /// </para>
     /// </summary>
-    public int[] ElementIds
+    public override int[] ElementIds
     {
       get { return _elementIds; }
       set
