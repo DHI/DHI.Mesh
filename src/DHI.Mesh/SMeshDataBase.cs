@@ -30,8 +30,8 @@ namespace DHI.Mesh
     private double[] _z;
     private int[] _code;
 
-    internal protected int[] _elementType;
-    internal protected int[][] _connectivity;
+    private protected int[] _elementType;
+    private protected int[][] _connectivity;
 
     public SMeshDataBase(string projection, int[] nodeIds, double[] x, double[] y, double[] z, int[] code, int[] elementIds, int[] elementType, int[][] connectivity, MeshUnit zUnit = MeshUnit.Meter)
     {
