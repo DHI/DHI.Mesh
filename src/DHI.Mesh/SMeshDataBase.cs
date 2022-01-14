@@ -21,7 +21,7 @@ namespace DHI.Mesh
   /// </para>
   /// </summary>
   [Serializable]
-  public class SMeshDataBase : IMeshDataInfo
+  public class SMeshDataBase : ISMeshData
   {
 
     public SMeshDataBase(string projection, int[] nodeIds, double[] x, double[] y, double[] z, int[] code, int[] elementIds, MeshUnit zUnit = MeshUnit.Meter)
