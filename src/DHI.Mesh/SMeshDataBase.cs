@@ -23,17 +23,28 @@ namespace DHI.Mesh
   [Serializable]
   public class SMeshDataBase : ISMeshData
   {
+    private int[] _nodeIds;
+    private int[] _elementIds;
+    private double[] _x;
+    private double[] _y;
+    private double[] _z;
+    private int[] _code;
 
-    public SMeshDataBase(string projection, int[] nodeIds, double[] x, double[] y, double[] z, int[] code, int[] elementIds, MeshUnit zUnit = MeshUnit.Meter)
+    internal protected int[] _elementType;
+    internal protected int[][] _connectivity;
+
+    public SMeshDataBase(string projection, int[] nodeIds, double[] x, double[] y, double[] z, int[] code, int[] elementIds, int[] elementType, int[][] connectivity, MeshUnit zUnit = MeshUnit.Meter)
     {
       Projection = projection;
       ZUnit = zUnit;
-      NodeIds = nodeIds;
-      X = x;
-      Y = y;
-      Z = z;
-      Code = code;
-      ElementIds = elementIds;
+      _nodeIds = nodeIds;
+      _x = x;
+      _y = y;
+      _z = z;
+      _code = code;
+      _elementIds = elementIds;
+      _elementType = elementType;
+      _connectivity = connectivity;
     }
 
     /// <summary>
@@ -50,13 +61,13 @@ namespace DHI.Mesh
     /// Number of nodes in the mesh.
     /// </summary>
     [IgnoreDataMemberAttribute]
-    public virtual int NumberOfNodes { get { return (NodeIds.Length); } }
+    public int NumberOfNodes { get { return (_nodeIds.Length); } }
 
     /// <summary>
     /// Number of elements in the mesh
     /// </summary>
     [IgnoreDataMemberAttribute]
-    public virtual int NumberOfElements { get { return (ElementIds.Length); } }
+    public int NumberOfElements { get { return (_elementIds.Length); } }
 
 
     /// <summary>
@@ -71,7 +82,16 @@ namespace DHI.Mesh
     /// can make some tools stop working.
     /// </para>
     /// </summary>
-    public virtual int[] NodeIds { get; set; }
+    public int[] NodeIds
+    {
+      get { return _nodeIds; }
+      set
+      {
+        if (_nodeIds.Length != value.Length)
+          throw new ArgumentException("Length of input does not match number of nodes");
+        _nodeIds = value;
+      }
+    }
 
     /// <summary>
     /// Node X coordinates.
@@ -81,7 +101,16 @@ namespace DHI.Mesh
     /// length as the original one.
     /// </para>
     /// </summary>
-    public virtual double[] X { get; set; }
+    public double[] X
+    {
+      get { return _x; }
+      set
+      {
+        if (_x.Length != value.Length)
+          throw new ArgumentException("Length of input does not match number of nodes");
+        _x = value;
+      }
+    }
 
     /// <summary>
     /// Node Y coordinates.
@@ -91,7 +120,16 @@ namespace DHI.Mesh
     /// length as the original one.
     /// </para>
     /// </summary>
-    public virtual double[] Y { get; set; }
+    public double[] Y
+    {
+      get { return _y; }
+      set
+      {
+        if (_y.Length != value.Length)
+          throw new ArgumentException("Length of input does not match number of nodes");
+        _y = value;
+      }
+    }
 
     /// <summary>
     /// Node Z coordinates.
@@ -101,7 +139,16 @@ namespace DHI.Mesh
     /// length as the original one.
     /// </para>
     /// </summary>
-    public virtual double[] Z { get; set; }
+    public double[] Z
+    {
+      get { return _z; }
+      set
+      {
+        if (_z.Length != value.Length)
+          throw new ArgumentException("Length of input does not match number of nodes");
+        _z = value;
+      }
+    }
 
     /// <summary>
     /// Node boundary code.
@@ -111,7 +158,16 @@ namespace DHI.Mesh
     /// length as the original one.
     /// </para>
     /// </summary>
-    public virtual int[] Code { get; set; }
+    public int[] Code
+    {
+      get { return _code; }
+      set
+      {
+        if (_code.Length != value.Length)
+          throw new ArgumentException("Length of input does not match number of nodes");
+        _code = value;
+      }
+    }
 
     /// <summary>
     /// Element Id's. Can be null, then default value is assumed.
@@ -125,6 +181,54 @@ namespace DHI.Mesh
     /// can make some tools stop working.
     /// </para>
     /// </summary>
-    public virtual int[] ElementIds { get; set; }
+    public int[] ElementIds
+    {
+      get { return _elementIds; }
+      set
+      {
+        if (_elementIds.Length != value.Length)
+          throw new ArgumentException("Length of input does not match number of elements");
+        _elementIds = value;
+      }
+    }
+
+    /// <summary>
+    /// Array of element types. See documentation for each type. Can be null, then automatically derived.
+    /// </summary>
+    // TODO: Make into a enum
+    public int[] ElementType
+    {
+      get { return _elementType; ; }
+      set
+      {
+        if (_elementType.Length != value.Length)
+          throw new ArgumentException("Length of input does not match number of elements");
+        _elementType = value;
+      }
+    }
+
+    /// <summary>
+    /// The <see cref="ElementTable"/> defines for each element which 
+    /// nodes that defines the element. 
+    /// <para>
+    /// The numbers in the <see cref="ElementTable"/> are node indeces, not numbers!
+    /// Each value in the table must be between 0 and <code>number-of-nodes - 1</code>.
+    /// </para>
+    /// <para>
+    /// You can modify each value individually directly in the list, 
+    /// or provide a new array of values, which must have the same
+    /// length as the original one.
+    /// </para>
+    /// </summary>
+    public int[][] ElementTable
+    {
+      get { return _connectivity; }
+      set
+      {
+        if (_connectivity.Length != value.Length)
+          throw new ArgumentException("Length of input does not match number of elements");
+        _connectivity = value;
+      }
+    }
   }
 }

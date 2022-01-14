@@ -33,7 +33,7 @@ namespace DHI.Mesh
     /// </summary>
     public SMeshSearcher(ISMeshData mbase)
     {
-      var mesh = new SMeshData(mbase.Projection, mbase.NodeIds, mbase.X, mbase.Y, mbase.Z, mbase.Code, mbase.ElementIds, mbase.ZUnit);
+      var mesh = new SMeshData(mbase.Projection, mbase.NodeIds, mbase.X, mbase.Y, mbase.Z, mbase.Code, mbase.ElementIds, mbase.ElementType, mbase.ElementTable, mbase.ZUnit);
       mesh.BuildDerivedData();
       _mesh = mesh;
     }
