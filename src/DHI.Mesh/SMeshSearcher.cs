@@ -29,7 +29,7 @@ namespace DHI.Mesh
     }
 
     /// <summary>
-    /// Create searcher for provided <paramref name="meshBase"/>
+    /// Create searcher for provided <paramref name="mbase"/>
     /// </summary>
     public SMeshSearcher(ISMeshData mbase)
     {
