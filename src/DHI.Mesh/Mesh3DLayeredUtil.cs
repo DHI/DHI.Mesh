@@ -253,7 +253,7 @@ namespace DHI.Mesh
       // --------------------------------------------------
       // Create 2D mesh
       SMeshData mesh2D = 
-        SMeshData.CreateMesh(
+        new SMeshData(
           mesh.Projection,
           null,
           xv2.ToArray(), yv2.ToArray(), zv2.ToArray(), cv2.ToArray(),

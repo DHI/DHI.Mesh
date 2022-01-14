@@ -22,7 +22,28 @@ namespace DHI.Mesh
   /// </summary>
   public class MeshData : MeshDataBase, IMeshData
   {
+    public MeshData(IList<MeshNode> nodes, IList<MeshElement> elements, string projection, MeshUnit zUnit)
+      : base(nodes, elements, projection, zUnit)
+    {
+
+    }
+
+
+    /// <summary>
+    /// Create mesh from arrays.
+    /// <para>
+    /// Note that the <paramref name="connectivity"/> array is using zero-based indices
+    /// (as compared to the <see cref="MeshFile.ElementTable"/>, which is using one-based indices)
+    /// </para>
+    /// </summary>
+    public MeshData(string projection, int[] nodeIds, double[] x, double[] y, double[] z, int[] code, int[] elementIds, int[] elementTypes, int[][] connectivity, MeshUnit zUnit = MeshUnit.Meter)
+      : base(projection, nodeIds, x, y, z, code, elementIds, elementTypes, connectivity, zUnit = MeshUnit.Meter)
+    {
+   
+    }
+
     #region Geometry region
+
     /// <summary>
     /// Element faces.
     /// <para>
@@ -34,73 +55,6 @@ namespace DHI.Mesh
     public List<CMeshFace> Faces { get; private set; }
 
     #endregion
-
-    /// <summary>
-    /// Create mesh from arrays.
-    /// <para>
-    /// Note that the <paramref name="connectivity"/> array is using zero-based indices
-    /// (as compared to the <see cref="MeshFile.ElementTable"/>, which is using one-based indices)
-    /// </para>
-    /// </summary>
-    public static MeshData CreateMesh(string projection, int[] nodeIds, double[] x, double[] y, double[] z, int[] code, int[] elementIds, int[] elementTypes, int[][] connectivity, MeshUnit zUnit = MeshUnit.Meter)
-    {
-      MeshData meshData = new MeshData();
-      meshData.Projection = projection;
-      meshData.ZUnit = zUnit;
-      meshData.Nodes = new List<MeshNode>(nodeIds.Length);
-      meshData.Elements = new List<MeshElement>(elementIds.Length);
-
-      for (int i = 0; i < nodeIds.Length; i++)
-      {
-        var node = new MeshNode()
-        {
-          Index = i,
-          Id = nodeIds[i],
-          X = x[i],
-          Y = y[i],
-          Z = z[i],
-          Code = code[i],
-        };
-        meshData.Nodes.Add(node);
-      }
-
-      for (int ielmt = 0; ielmt < elementIds.Length; ielmt++)
-      {
-        int[] nodeInElmt = connectivity[ielmt];
-        int numNodesInElmt = nodeInElmt.Length;
-
-        var element = new MeshElement()
-        {
-          Index = ielmt,
-          Id = elementIds[ielmt],
-          ElementType = elementTypes[ielmt],
-          Nodes = new List<MeshNode>(numNodesInElmt),
-        };
-        double xc = 0;
-        double yc = 0;
-        double zc = 0;
-
-        for (int j = 0; j < numNodesInElmt; j++)
-        {
-          int nodeIndex = nodeInElmt[j];
-          MeshNode meshNode = meshData.Nodes[nodeIndex];
-          element.Nodes.Add(meshNode);
-          xc += meshNode.X;
-          yc += meshNode.Y;
-          zc += meshNode.Z;
-        }
-
-        double inumNodesInElmt = 1.0 / numNodesInElmt;
-        element.XCenter = xc * inumNodesInElmt; // / numNodesInElmt;
-        element.YCenter = yc * inumNodesInElmt; // / numNodesInElmt;
-        element.ZCenter = zc * inumNodesInElmt; // / numNodesInElmt;
-
-        meshData.Elements.Add(element);
-      }
-
-      return meshData;
-
-    }
 
     /// <summary>
     /// In case the mesh has been modified and the object indices are no longer correct,

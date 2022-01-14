@@ -23,6 +23,19 @@ namespace DHI.Mesh
   [Serializable]
   public class SMeshDataBase : IMeshDataInfo
   {
+
+    public SMeshDataBase(string projection, int[] nodeIds, double[] x, double[] y, double[] z, int[] code, int[] elementIds, MeshUnit zUnit = MeshUnit.Meter)
+    {
+      Projection = projection;
+      ZUnit = zUnit;
+      NodeIds = nodeIds;
+      X = x;
+      Y = y;
+      Z = z;
+      Code = code;
+      ElementIds = elementIds;
+    }
+
     /// <summary>
     /// Projection string, in WKT format
     /// </summary>

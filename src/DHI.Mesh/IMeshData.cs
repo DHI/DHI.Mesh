@@ -10,10 +10,10 @@ namespace DHI.Mesh
     /// <summary>
     /// Nodes in the mesh.
     /// </summary>
-    List<MeshNode> Nodes { get; set; }
+    IList<MeshNode> Nodes { get; set; }
     /// <summary>
     /// Elements in the mesh.
     /// </summary>
-    List<MeshElement> Elements { get; set; }
+    IList<MeshElement> Elements { get; set; }
   }
 }

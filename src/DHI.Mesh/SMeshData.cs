@@ -23,27 +23,31 @@ namespace DHI.Mesh
   /// </summary>
   public class SMeshData : SMeshDataBase, IMeshDataInfo
   {
-    // Node variables
-    private int[]    _nodeIds; // this can be null, then set default id's, starting from 1
-    private double[] _x;
-    private double[] _y;
-    private double[] _z;
-    private int[]    _code;
+    public SMeshData(string projection, int[] nodeIds, double[] x, double[] y, double[] z, int[] code, int[] elementIds, MeshUnit zUnit = MeshUnit.Meter)
+      : base(projection, nodeIds, x, y, z, code, elementIds, zUnit)
+    {
 
-    // Element variables
-    private int[]   _elementIds; // this can be null, then set default id's, starting from 1
+    }
+
+    public SMeshData(string projection,int[] nodeIds, double[] x, double[] y, double[] z, int[] code, int[] elementIds, int[] elementTypes, int[][] connectivity, MeshUnit zUnit = MeshUnit.Meter)
+      : base(projection, nodeIds, x, y, z, code, elementIds, zUnit)
+    {
+      _elementType = elementTypes;
+      _connectivity = connectivity;
+    }
+
     private int[]   _elementType;
     private int[][] _connectivity;
 
     /// <summary>
     /// Number of nodes in the mesh.
     /// </summary>
-    public override int NumberOfNodes { get { return (_nodeIds.Length); } }
+    public override int NumberOfNodes { get { return (NodeIds.Length); } }
 
     /// <summary>
     /// Number of elements in the mesh
     /// </summary>
-    public override int NumberOfElements { get { return (_elementIds.Length); } }
+    public override int NumberOfElements { get { return (ElementIds.Length); } }
 
 
     /// <summary>
@@ -60,12 +64,12 @@ namespace DHI.Mesh
     /// </summary>
     public override int[] NodeIds
     {
-      get { return _nodeIds; }
+      get { return NodeIds; }
       set
       {
-        if (_nodeIds.Length != value.Length)
+        if (NodeIds.Length != value.Length)
           throw new ArgumentException("Length of input does not match number of nodes");
-        _nodeIds = value;
+        NodeIds = value;
       }
     }
 
@@ -79,12 +83,12 @@ namespace DHI.Mesh
     /// </summary>
     public override double[] X
     {
-      get { return _x; }
+      get { return X; }
       set
       {
-        if (_x.Length != value.Length)
+        if (X.Length != value.Length)
           throw new ArgumentException("Length of input does not match number of nodes");
-        _x = value;
+        X = value;
       }
     }
 
@@ -98,12 +102,12 @@ namespace DHI.Mesh
     /// </summary>
     public override double[] Y
     {
-      get { return _y; }
+      get { return Y; }
       set
       {
-        if (_y.Length != value.Length)
+        if (Y.Length != value.Length)
           throw new ArgumentException("Length of input does not match number of nodes");
-        _y = value;
+        Y = value;
       }
     }
 
@@ -117,12 +121,12 @@ namespace DHI.Mesh
     /// </summary>
     public override double[] Z
     {
-      get { return _z; }
+      get { return Z; }
       set
       {
-        if (_z.Length != value.Length)
+        if (Z.Length != value.Length)
           throw new ArgumentException("Length of input does not match number of nodes");
-        _z = value;
+        Z = value;
       }
     }
 
@@ -136,12 +140,12 @@ namespace DHI.Mesh
     /// </summary>
     public override int[] Code
     {
-      get { return _code; }
+      get { return Code; }
       set
       {
-        if (_code.Length != value.Length)
+        if (Code.Length != value.Length)
           throw new ArgumentException("Length of input does not match number of nodes");
-        _code = value;
+        Code = value;
       }
     }
 
@@ -159,12 +163,12 @@ namespace DHI.Mesh
     /// </summary>
     public override int[] ElementIds
     {
-      get { return _elementIds; }
+      get { return ElementIds; }
       set
       {
-        if (_elementIds.Length != value.Length)
+        if (ElementIds.Length != value.Length)
           throw new ArgumentException("Length of input does not match number of elements");
-        _elementIds = value;
+        ElementIds = value;
       }
     }
 
@@ -175,12 +179,12 @@ namespace DHI.Mesh
     // TODO: Make into a enum
     public int[] ElementType
     {
-      get { return _elementType; }
+      get { return ElementIds; }
       set
       {
-        if (_elementType.Length != value.Length)
+        if (ElementIds.Length != value.Length)
           throw new ArgumentException("Length of input does not match number of elements");
-        _elementType = value;
+        ElementIds = value;
       }
     }
 
@@ -199,12 +203,12 @@ namespace DHI.Mesh
     /// </summary>
     public int[][] ElementTable
     {
-      get { return _connectivity; }
+      get { return ElementTable; }
       set
       {
-        if (_connectivity.Length != value.Length)
+        if (ElementTable.Length != value.Length)
           throw new ArgumentException("Length of input does not match number of elements");
-        _connectivity = value;
+        ElementTable = value;
       }
     }
 
@@ -307,9 +311,9 @@ namespace DHI.Mesh
         for (int j = 0; j < numNodesInElmt; j++)
         {
           int      nodeIndex = nodeInElmt[j];
-          xc += _x[nodeIndex];
-          yc += _y[nodeIndex];
-          zc += _z[nodeIndex];
+          xc += X[nodeIndex];
+          yc += Y[nodeIndex];
+          zc += Z[nodeIndex];
         }
 
         double inumNodesInElmt = 1.0 / numNodesInElmt;
@@ -586,7 +590,7 @@ namespace DHI.Mesh
       string projection, double[] x, double[] y, double[] z, int[] code,
       int[][] connectivity, MeshUnit zUnit = MeshUnit.Meter)
     {
-      return CreateMesh(projection, null, x, y, z, code, null, null, connectivity);
+      return new SMeshData(projection, null, x, y, z, code, null, null, connectivity, zUnit);
     }
 
     /// <summary>
@@ -596,25 +600,9 @@ namespace DHI.Mesh
     /// (as compared to the <see cref="MeshFile.ElementTable"/>, which is using one-based indices)
     /// </para>
     /// </summary>
-    public static SMeshData CreateMesh(string projection, int[] nodeIds, double[] x, double[] y, double[] z, int[] code, int[] elementIds, int[] elementTypes, int[][] connectivity, MeshUnit zUnit = MeshUnit.Meter)
+    public static SMeshData CreateMesh(SMeshDataBase database, int[] elementTypes, int[][] connectivity, MeshUnit zUnit = MeshUnit.Meter)
     {
-      SMeshData meshData = new SMeshData();
-      meshData.Projection = projection;
-      meshData.ZUnit = zUnit;
-      meshData._nodeIds = nodeIds;
-      meshData._x = x;
-      meshData._y = y;
-      meshData._z = z;
-      meshData._code = code;
-      meshData._elementIds = elementIds;
-      meshData._elementType = elementTypes;
-      meshData._connectivity = connectivity;
-
-      return meshData;
-
+      return new SMeshData(database.Projection, database.NodeIds, database.X, database.Y, database.Z, database.Code, database.ElementIds, elementTypes, connectivity, zUnit);
     }
-
-
-
   }
 }
