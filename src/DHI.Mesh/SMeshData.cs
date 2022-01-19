@@ -4,35 +4,6 @@ using CMeshFace=DHI.Mesh.SMeshFace;
 
 namespace DHI.Mesh
 {
-  /// <summary>
-  /// Common interface for the two MeshData classes.
-  /// <para>
-  /// Included for easing unit tests.
-  /// </para>
-  /// </summary>
-  public interface IMeshData
-  {
-    /// <summary>
-    /// Projection string, in WKT format
-    /// </summary>
-    string Projection { get; set; }
-
-    /// <summary>
-    /// Unit of the z variables in the nodes and elements.
-    /// </summary>
-    MeshUnit ZUnit { get; set; }
-
-    /// <summary>
-    /// Number of nodes in the mesh.
-    /// </summary>
-    int NumberOfNodes { get; }
-
-    /// <summary>
-    /// Number of elements in the mesh
-    /// </summary>
-    int NumberOfElements { get; }
-
-  }
 
   /// <summary>
   /// A mesh, consisting of triangles and quadrilaterals elements.
@@ -50,202 +21,11 @@ namespace DHI.Mesh
   /// "MIKE SDK documentation index".
   /// </para>
   /// </summary>
-  public class SMeshData : IMeshData
+  public class SMeshData : SMeshDataBase, IMeshDataInfo
   {
-    // Node variables
-    private int[]    _nodeIds; // this can be null, then set default id's, starting from 1
-    private double[] _x;
-    private double[] _y;
-    private double[] _z;
-    private int[]    _code;
-
-    // Element variables
-    private int[]   _elementIds; // this can be null, then set default id's, starting from 1
-    private int[]   _elementType;
-    private int[][] _connectivity;
-
-
-    /// <summary>
-    /// Projection string, in WKT format
-    /// </summary>
-    public string Projection { get; set; }
-
-    /// <summary>
-    /// Unit of the z variables in the nodes and elements.
-    /// </summary>
-    public MeshUnit ZUnit { get; set; }
-
-    /// <summary>
-    /// Number of nodes in the mesh.
-    /// </summary>
-    public int NumberOfNodes { get { return (_nodeIds.Length); } }
-
-    /// <summary>
-    /// Number of elements in the mesh
-    /// </summary>
-    public int NumberOfElements { get { return (_elementIds.Length); } }
-
-
-    /// <summary>
-    /// Node Id's. Can be null, then default value is assumed.
-    /// <para>
-    /// You can modify each value individually directly in the list, 
-    /// or provide a new array of values, which must have the same
-    /// length as the original one.
-    /// </para>
-    /// <para>
-    /// Be aware that changing this to anything but the default values (1,2,3,...)
-    /// can make some tools stop working.
-    /// </para>
-    /// </summary>
-    public int[] NodeIds
+    public SMeshData(string projection, int[] nodeIds, double[] x, double[] y, double[] z, int[] code, int[] elementIds, int[] elementType, int[][] connectivity, MeshUnit zUnit = MeshUnit.Meter)
+      : base(projection, nodeIds, x, y, z, code, elementIds, elementType, connectivity, zUnit)
     {
-      get { return _nodeIds; }
-      set
-      {
-        if (_nodeIds.Length != value.Length)
-          throw new ArgumentException("Length of input does not match number of nodes");
-        _nodeIds = value;
-      }
-    }
-
-    /// <summary>
-    /// Node X coordinates.
-    /// <para>
-    /// You can modify each coordinate individually directly in the list, 
-    /// or provide a new array of coordinates, which must have the same
-    /// length as the original one.
-    /// </para>
-    /// </summary>
-    public double[] X
-    {
-      get { return _x; }
-      set
-      {
-        if (_x.Length != value.Length)
-          throw new ArgumentException("Length of input does not match number of nodes");
-        _x = value;
-      }
-    }
-
-    /// <summary>
-    /// Node Y coordinates.
-    /// <para>
-    /// You can modify each coordinate individually directly in the list, 
-    /// or provide a new array of coordinates, which must have the same
-    /// length as the original one.
-    /// </para>
-    /// </summary>
-    public double[] Y
-    {
-      get { return _y; }
-      set
-      {
-        if (_y.Length != value.Length)
-          throw new ArgumentException("Length of input does not match number of nodes");
-        _y = value;
-      }
-    }
-
-    /// <summary>
-    /// Node Z coordinates.
-    /// <para>
-    /// You can modify each coordinate individually directly in the list, 
-    /// or provide a new array of coordinates, which must have the same
-    /// length as the original one.
-    /// </para>
-    /// </summary>
-    public double[] Z
-    {
-      get { return _z; }
-      set
-      {
-        if (_z.Length != value.Length)
-          throw new ArgumentException("Length of input does not match number of nodes");
-        _z = value;
-      }
-    }
-
-    /// <summary>
-    /// Node boundary code.
-    /// <para>
-    /// You can modify each value individually directly in the list, 
-    /// or provide a new array of values, which must have the same
-    /// length as the original one.
-    /// </para>
-    /// </summary>
-    public int[] Code
-    {
-      get { return _code; }
-      set
-      {
-        if (_code.Length != value.Length)
-          throw new ArgumentException("Length of input does not match number of nodes");
-        _code = value;
-      }
-    }
-
-    /// <summary>
-    /// Element Id's. Can be null, then default value is assumed.
-    /// <para>
-    /// You can modify each value individually directly in the list, 
-    /// or provide a new array of values, which must have the same
-    /// length as the original one.
-    /// </para>
-    /// <para>
-    /// Be aware that changing this to anything but the default values (1,2,3,...)
-    /// can make some tools stop working.
-    /// </para>
-    /// </summary>
-    public int[] ElementIds
-    {
-      get { return _elementIds; }
-      set
-      {
-        if (_elementIds.Length != value.Length)
-          throw new ArgumentException("Length of input does not match number of elements");
-        _elementIds = value;
-      }
-    }
-
-
-    /// <summary>
-    /// Array of element types. See documentation for each type. Can be null, then automatically derived.
-    /// </summary>
-    // TODO: Make into a enum
-    public int[] ElementType
-    {
-      get { return _elementType; }
-      set
-      {
-        if (_elementType.Length != value.Length)
-          throw new ArgumentException("Length of input does not match number of elements");
-        _elementType = value;
-      }
-    }
-
-    /// <summary>
-    /// The <see cref="ElementTable"/> defines for each element which 
-    /// nodes that defines the element. 
-    /// <para>
-    /// The numbers in the <see cref="ElementTable"/> are node indeces, not numbers!
-    /// Each value in the table must be between 0 and <code>number-of-nodes - 1</code>.
-    /// </para>
-    /// <para>
-    /// You can modify each value individually directly in the list, 
-    /// or provide a new array of values, which must have the same
-    /// length as the original one.
-    /// </para>
-    /// </summary>
-    public int[][] ElementTable
-    {
-      get { return _connectivity; }
-      set
-      {
-        if (_connectivity.Length != value.Length)
-          throw new ArgumentException("Length of input does not match number of elements");
-        _connectivity = value;
-      }
     }
 
     private double[] _elmtXCenter;
@@ -347,9 +127,9 @@ namespace DHI.Mesh
         for (int j = 0; j < numNodesInElmt; j++)
         {
           int      nodeIndex = nodeInElmt[j];
-          xc += _x[nodeIndex];
-          yc += _y[nodeIndex];
-          zc += _z[nodeIndex];
+          xc += X[nodeIndex];
+          yc += Y[nodeIndex];
+          zc += Z[nodeIndex];
         }
 
         double inumNodesInElmt = 1.0 / numNodesInElmt;
@@ -626,7 +406,7 @@ namespace DHI.Mesh
       string projection, double[] x, double[] y, double[] z, int[] code,
       int[][] connectivity, MeshUnit zUnit = MeshUnit.Meter)
     {
-      return CreateMesh(projection, null, x, y, z, code, null, null, connectivity);
+      return new SMeshData(projection, null, x, y, z, code, null, null, connectivity, zUnit);
     }
 
     /// <summary>
@@ -636,25 +416,9 @@ namespace DHI.Mesh
     /// (as compared to the <see cref="MeshFile.ElementTable"/>, which is using one-based indices)
     /// </para>
     /// </summary>
-    public static SMeshData CreateMesh(string projection, int[] nodeIds, double[] x, double[] y, double[] z, int[] code, int[] elementIds, int[] elementTypes, int[][] connectivity, MeshUnit zUnit = MeshUnit.Meter)
+    public static SMeshData CreateMesh(SMeshDataBase database, int[] elementTypes, int[][] connectivity, MeshUnit zUnit = MeshUnit.Meter)
     {
-      SMeshData meshData = new SMeshData();
-      meshData.Projection = projection;
-      meshData.ZUnit = zUnit;
-      meshData._nodeIds = nodeIds;
-      meshData._x = x;
-      meshData._y = y;
-      meshData._z = z;
-      meshData._code = code;
-      meshData._elementIds = elementIds;
-      meshData._elementType = elementTypes;
-      meshData._connectivity = connectivity;
-
-      return meshData;
-
+      return new SMeshData(database.Projection, database.NodeIds, database.X, database.Y, database.Z, database.Code, database.ElementIds, elementTypes, connectivity, zUnit);
     }
-
-
-
   }
 }

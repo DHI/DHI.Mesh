@@ -119,7 +119,7 @@ namespace DHI.Mesh
   /// </summary>
   public class MeshIntersectionCalculator : IMeshIntersectionCalculator
   {
-    private readonly MeshData _mesh;
+    private readonly IMeshData _mesh;
     private MeshSearcher _searcher;
 
     /// <summary>
@@ -138,7 +138,7 @@ namespace DHI.Mesh
     /// <summary>
     /// Default constructor
     /// </summary>
-    public MeshIntersectionCalculator(MeshData mesh)
+    public MeshIntersectionCalculator(IMeshData mesh)
     {
       _mesh = mesh;
     }
@@ -146,7 +146,7 @@ namespace DHI.Mesh
     /// <summary>
     /// Constructor to use if a <see cref="MeshSearcher"/> is already available.
     /// </summary>
-    public MeshIntersectionCalculator(MeshData mesh, MeshSearcher searcher)
+    public MeshIntersectionCalculator(IMeshData mesh, MeshSearcher searcher)
     {
       _mesh = mesh;
       _searcher = searcher;

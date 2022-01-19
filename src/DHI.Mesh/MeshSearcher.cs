@@ -4,8 +4,6 @@ using SearchTreeType = NetTopologySuite.Index.Quadtree.Quadtree<DHI.Mesh.MeshEle
 
 namespace DHI.Mesh
 {
-
-
   /// <summary>
   /// Search class for searching for elements (and eventually also nearest nodes)
   /// <para>
@@ -19,13 +17,13 @@ namespace DHI.Mesh
     /// </summary>
     public double Tolerance { get; set; } = 1e-3;
 
-    private MeshData _mesh;
+    private IMeshData _mesh;
     private SearchTreeType _elementSearchTree;
 
     /// <summary>
     /// Create searcher for provided <paramref name="mesh"/>
     /// </summary>
-    public MeshSearcher(MeshData mesh)
+    public MeshSearcher(IMeshData mesh)
     {
       _mesh = mesh;
     }

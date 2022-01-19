@@ -177,20 +177,20 @@ namespace DHI.Mesh.Test
       Assert.IsNull(search1);
     }
 
-    private IMeshData GetMesh(string dfsufilepath, bool smesh)
+    private IMeshDataInfo GetMesh(string dfsufilepath, bool smesh)
     {
-      IMeshData mesh;
+      IMeshDataInfo mesh;
 
       DfsuFile file = DfsFileFactory.DfsuFileOpen(dfsufilepath);
       if (smesh)
       {
-        mesh = SMeshData.CreateMesh(file.Projection.WKTString, file.NodeIds, file.X, file.Y, file.Z.ToDoubleArray(),
+        mesh = new SMeshData(file.Projection.WKTString, file.NodeIds, file.X, file.Y, file.Z.ToDoubleArray(),
           file.Code, file.ElementIds, file.ElementType, file.ElementTable.ToZeroBased());
         return mesh;
       }
       else
       {
-        mesh = MeshData.CreateMesh(file.Projection.WKTString, file.NodeIds, file.X, file.Y, file.Z.ToDoubleArray(),
+        mesh = new MeshData(file.Projection.WKTString, file.NodeIds, file.X, file.Y, file.Z.ToDoubleArray(),
           file.Code, file.ElementIds, file.ElementType, file.ElementTable.ToZeroBased());
         return mesh;
       }

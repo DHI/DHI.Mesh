@@ -363,7 +363,7 @@ namespace DHI.Mesh
     /// </summary>
     public static MeshData ToMeshData(this MeshFile file)
     {
-      return MeshData.CreateMesh(file.Projection, file.NodeIds, file.X, file.Y, file.Z, file.Code, file.ElementIds, file.ElementType, file.ElementTable.ToZeroBased(), file.ZUnit);
+      return new MeshData(file.Projection, file.NodeIds, file.X, file.Y, file.Z, file.Code, file.ElementIds, file.ElementType, file.ElementTable.ToZeroBased(), file.ZUnit);
     }
 
     /// <summary>
@@ -371,7 +371,7 @@ namespace DHI.Mesh
     /// </summary>
     public static SMeshData ToSMeshData(this MeshFile file)
     {
-      return SMeshData.CreateMesh(file.Projection, file.NodeIds, file.X, file.Y, file.Z, file.Code, file.ElementIds, file.ElementType, file.ElementTable.ToZeroBased(), file.ZUnit);
+      return new SMeshData(file.Projection, file.NodeIds, file.X, file.Y, file.Z, file.Code, file.ElementIds, file.ElementType, file.ElementTable.ToZeroBased(), file.ZUnit);
     }
 
     /// <summary>
@@ -379,7 +379,7 @@ namespace DHI.Mesh
     /// </summary>
     public static MeshData ToMesh(this SMeshData meshData)
     {
-      return MeshData.CreateMesh(meshData.Projection, meshData.NodeIds, meshData.X, meshData.Y, meshData.Z, meshData.Code, meshData.ElementIds, meshData.ElementType, meshData.ElementTable.ToZeroBased(), meshData.ZUnit);
+      return new MeshData(meshData.Projection, meshData.NodeIds, meshData.X, meshData.Y, meshData.Z, meshData.Code, meshData.ElementIds, meshData.ElementType, meshData.ElementTable.ToZeroBased(), meshData.ZUnit);
     }
 
     /// <summary>
@@ -419,13 +419,7 @@ namespace DHI.Mesh
         }
       }
 
-      SMeshData smesh =
-        SMeshData.CreateMesh(
-          meshData.Projection,
-          nodeId, x, y, z, code,
-          elmtId, null, elmtTable, meshData.ZUnit
-        );
-      return smesh;
+      return new SMeshData(meshData.Projection, nodeId, x, y, z, code, elmtId, null, elmtTable, meshData.ZUnit);
     }
 
 

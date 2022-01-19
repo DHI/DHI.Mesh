@@ -29,6 +29,17 @@ namespace DHI.Mesh
     }
 
     /// <summary>
+    /// Create searcher for provided <paramref name="mbase"/>
+    /// </summary>
+    public SMeshSearcher(ISMeshData mbase)
+    {
+      var mesh = new SMeshData(mbase.Projection, mbase.NodeIds, mbase.X, mbase.Y, mbase.Z, mbase.Code, mbase.ElementIds, mbase.ElementType, mbase.ElementTable, mbase.ZUnit);
+      mesh.BuildDerivedData();
+      _mesh = mesh;
+    }
+
+
+    /// <summary>
     /// Setup for element-search
     /// </summary>
     public void SetupElementSearch()

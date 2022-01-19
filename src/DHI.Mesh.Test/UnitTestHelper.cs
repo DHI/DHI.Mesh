@@ -27,9 +27,9 @@ namespace DHI.Mesh.Test
     }
 
     /// <summary>
-    /// Create <see cref="IMeshData"/>, depending on <paramref name="smesh"/> flag.
+    /// Create <see cref="IMeshDataInfo"/>, depending on <paramref name="smesh"/> flag.
     /// </summary>
-    public static IMeshData ToMeshData(this MeshFile file, bool smesh)
+    public static IMeshDataInfo ToMeshData(this MeshFile file, bool smesh)
     {
       if (smesh)
         return file.ToSMeshData();
@@ -39,7 +39,7 @@ namespace DHI.Mesh.Test
 
   public static class MeshFactory
   {
-    public static IMeshIntersectionCalculator CreateIntersectionCalculator(IMeshData mesh)
+    public static IMeshIntersectionCalculator CreateIntersectionCalculator(IMeshDataInfo mesh)
     {
       if (mesh is MeshData md)
         return new MeshIntersectionCalculator(md);

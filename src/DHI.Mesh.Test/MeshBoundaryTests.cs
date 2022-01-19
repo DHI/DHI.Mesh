@@ -114,7 +114,7 @@ namespace DHI.Mesh.Test
       {
         DfsuFile file = DfsFileFactory.DfsuFileOpen(meshPath);
         timer = MeshExtensions.StartTimer();
-        mesh = MeshData.CreateMesh(file.Projection.WKTString, file.NodeIds, file.X, file.Y, file.Z.ToDoubleArray(), file.Code, file.ElementIds, file.ElementType, file.ElementTable.ToZeroBased());
+        mesh = new MeshData(file.Projection.WKTString, file.NodeIds, file.X, file.Y, file.Z.ToDoubleArray(), file.Code, file.ElementIds, file.ElementType, file.ElementTable.ToZeroBased());
         file.Close();
       }
       else
@@ -145,7 +145,7 @@ namespace DHI.Mesh.Test
       {
         DfsuFile file = DfsFileFactory.DfsuFileOpen(meshPath);
         timer = MeshExtensions.StartTimer();
-        mesh = SMeshData.CreateMesh(file.Projection.WKTString, file.NodeIds, file.X, file.Y, file.Z.ToDoubleArray(), file.Code, file.ElementIds, file.ElementType, file.ElementTable.ToZeroBased());
+        mesh = new SMeshData(file.Projection.WKTString, file.NodeIds, file.X, file.Y, file.Z.ToDoubleArray(), file.Code, file.ElementIds, file.ElementType, file.ElementTable.ToZeroBased());
         file.Close();
       }
       else
@@ -279,7 +279,7 @@ namespace DHI.Mesh.Test
       {
         DfsuFile file = DfsFileFactory.DfsuFileOpen(meshPath);
         timer = MeshExtensions.StartTimer();
-        mesh = MeshData.CreateMesh(file.Projection.WKTString, file.NodeIds, file.X, file.Y, file.Z.ToDoubleArray(), file.Code, file.ElementIds, file.ElementType, file.ElementTable.ToZeroBased());
+        mesh = new MeshData(file.Projection.WKTString, file.NodeIds, file.X, file.Y, file.Z.ToDoubleArray(), file.Code, file.ElementIds, file.ElementType, file.ElementTable.ToZeroBased());
         file.Close();
       }
       else
@@ -309,7 +309,7 @@ namespace DHI.Mesh.Test
       {
         DfsuFile  file  = DfsFileFactory.DfsuFileOpen(meshPath);
         timer = MeshExtensions.StartTimer();
-        mesh = SMeshData.CreateMesh(file.Projection.WKTString, file.NodeIds, file.X, file.Y, file.Z.ToDoubleArray(), file.Code, file.ElementIds, file.ElementType, file.ElementTable.ToZeroBased());
+        mesh = new SMeshData(file.Projection.WKTString, file.NodeIds, file.X, file.Y, file.Z.ToDoubleArray(), file.Code, file.ElementIds, file.ElementType, file.ElementTable.ToZeroBased());
         file.Close();
       }
       else
