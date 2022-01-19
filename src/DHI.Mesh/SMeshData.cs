@@ -393,14 +393,6 @@ namespace DHI.Mesh
 
     /// <summary>
     /// Create mesh from arrays.
-    /// <para>
-    /// The arrays <see cref="NodeIds"/>, <see cref="ElementIds"/>, <see cref="ElementType"/>
-    /// are created with default values.
-    /// </para>
-    /// <para>
-    /// Note that the <paramref name="connectivity"/> array is using zero-based indices
-    /// (as compared to the <see cref="MeshFile.ElementTable"/>, which is using one-based indices)
-    /// </para>
     /// </summary>
     public static SMeshData CreateMesh(
       string projection, double[] x, double[] y, double[] z, int[] code,
@@ -411,10 +403,6 @@ namespace DHI.Mesh
 
     /// <summary>
     /// Create mesh from arrays.
-    /// <para>
-    /// Note that the <paramref name="connectivity"/> array is using zero-based indices
-    /// (as compared to the <see cref="MeshFile.ElementTable"/>, which is using one-based indices)
-    /// </para>
     /// </summary>
     public static SMeshData CreateMesh(SMeshDataBase database, int[] elementTypes, int[][] connectivity, MeshUnit zUnit = MeshUnit.Meter)
     {
