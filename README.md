@@ -1,6 +1,7 @@
 # DHI.Mesh
 
 [![ci](https://github.com/DHI/DHI.Mesh/workflows/ci/badge.svg)](https://github.com/DHI/DHI.Mesh/actions/workflows/ci.yml)
+[![](https://img.shields.io/nuget/v/DHI.Mesh.svg?label=DHI.Mesh)](https://www.nuget.org/packages/DHI.Mesh)
 
 This library contains data structures for easing implementing algorithms on 2D mesh type data, 
 i.e. unstructured, triangulated data. It can contain quadrilateral elements as well as triangular elements.
