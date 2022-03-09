@@ -7,7 +7,6 @@ using System.Linq;
 using DHI.Generic.MikeZero.DFS;
 using DHI.Generic.MikeZero.DFS.dfsu;
 using NetTopologySuite.Geometries;
-using NetTopologySuite.Geometries;
 using NetTopologySuite.IO;
 using Newtonsoft.Json;
 using NUnit.Framework;
