@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using GeoAPI.Geometries;
+﻿using NetTopologySuite.Geometries;
+using System.Collections.Generic;
 using SearchTreeType = NetTopologySuite.Index.Quadtree.Quadtree<int>;
 
 namespace DHI.Mesh
@@ -124,7 +124,7 @@ namespace DHI.Mesh
     /// If no elements are found, an empty list is returned.
     /// </para>
     /// </summary>
-    public IList<int> FindElements(IPolygon polygon)
+    public IList<int> FindElements(Polygon polygon)
     {
       if (_elementSearchTree == null)
       {
@@ -147,7 +147,7 @@ namespace DHI.Mesh
           continue;
 
         // More detailed check for actual overlap
-        IPolygon elementPolygon = _mesh.ElementToPolygon(element);
+        Polygon elementPolygon = _mesh.ElementToPolygon(element);
         if (elementPolygon.Intersects(polygon))
         {
           result.Add(element);

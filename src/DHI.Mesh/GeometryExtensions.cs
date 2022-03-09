@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using GeoAPI.Geometries;
 using NetTopologySuite.Geometries;
 
 namespace DHI.Mesh
@@ -17,7 +16,7 @@ namespace DHI.Mesh
     /// <summary>
     /// Create a polygon from a mesh element
     /// </summary>
-    public static IPolygon ToPolygon(this MeshElement element)
+    public static Polygon ToPolygon(this MeshElement element)
     {
       return element.ToPolygon(GeomFactory);
     }
@@ -25,21 +24,21 @@ namespace DHI.Mesh
     /// <summary>
     /// Create a polygon from a mesh element.
     /// </summary>
-    public static IPolygon ToPolygon(this MeshElement element, GeometryFactory geomFactory)
+    public static Polygon ToPolygon(this MeshElement element, GeometryFactory geomFactory)
     {
-      List<Coordinate> coordinates = new List<Coordinate>(element.Nodes.Count);
-      
+      List<CoordinateZ> coordinates = new List<CoordinateZ>(element.Nodes.Count);
+
       MeshNode node;
       for (int i = 0; i < element.Nodes.Count; i++)
       {
         node = element.Nodes[i];
-        coordinates.Add(new Coordinate(node.X, node.Y, node.Z));
+        coordinates.Add(new CoordinateZ(node.X, node.Y, node.Z));
       }
       // Add the first node again, to close the polygon
       node = element.Nodes[0];
-      coordinates.Add(new Coordinate(node.X, node.Y, node.Z));
+      coordinates.Add(new CoordinateZ(node.X, node.Y, node.Z));
 
-      IPolygon elementPolygon = geomFactory.CreatePolygon(coordinates.ToArray());
+      Polygon elementPolygon = geomFactory.CreatePolygon(coordinates.ToArray());
 
       return elementPolygon;
     }
@@ -47,7 +46,7 @@ namespace DHI.Mesh
     /// <summary>
     /// Create a polygon from a mesh element.
     /// </summary>
-    public static IPolygon ElementToPolygon(this SMeshData mesh, int element)
+    public static Polygon ElementToPolygon(this SMeshData mesh, int element)
     {
       return ElementToPolygon(mesh, element, GeomFactory);
     }
@@ -55,7 +54,7 @@ namespace DHI.Mesh
     /// <summary>
     /// Create a polygon from a mesh element.
     /// </summary>
-    public static IPolygon ElementToPolygon(this SMeshData mesh, int element, GeometryFactory geomFactory)
+    public static Polygon ElementToPolygon(this SMeshData mesh, int element, GeometryFactory geomFactory)
     {
       int[] elementNodes = mesh.ElementTable[element];
       List<Coordinate> coordinates = new List<Coordinate>(elementNodes.Length);
@@ -64,13 +63,13 @@ namespace DHI.Mesh
       for (int i = 0; i < elementNodes.Length; i++)
       {
         node = elementNodes[i];
-        coordinates.Add(new Coordinate(mesh.X[node], mesh.Y[node], mesh.Z[node]));
+        coordinates.Add(new CoordinateZ(mesh.X[node], mesh.Y[node], mesh.Z[node]));
       }
       // Add the first node again, to close the polygon
       node = elementNodes[0];
-      coordinates.Add(new Coordinate(mesh.X[node], mesh.Y[node], mesh.Z[node]));
+      coordinates.Add(new CoordinateZ(mesh.X[node], mesh.Y[node], mesh.Z[node]));
 
-      IPolygon elementPolygon = geomFactory.CreatePolygon(coordinates.ToArray());
+      Polygon elementPolygon = geomFactory.CreatePolygon(coordinates.ToArray());
 
       return elementPolygon;
     }

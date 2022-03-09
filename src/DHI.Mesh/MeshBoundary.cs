@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using GeoAPI.Geometries;
 using NetTopologySuite.Geometries;
 // For easing syncing MeshBoundary.cs and SMeshBoundary.cs
 using CMeshData =DHI.Mesh.MeshData;
@@ -185,7 +184,7 @@ namespace DHI.Mesh
     /// To always return a <see cref="MultiPolygon"/>, set the <paramref name="alwaysMultiPolygon"/> to true.
     /// </para>
     /// </summary>
-    public static IGeometry BuildBoundaryGeometry(this CMeshData mesh, bool alwaysMultiPolygon = false, bool checkAllFaces = true)
+    public static Geometry BuildBoundaryGeometry(this CMeshData mesh, bool alwaysMultiPolygon = false, bool checkAllFaces = true)
     {
       //System.Diagnostics.Stopwatch timer = MeshExtensions.StartTimer();
       mesh.BuildFaces(true);
@@ -209,7 +208,7 @@ namespace DHI.Mesh
     /// To always return a <see cref="MultiPolygon"/>, set the <paramref name="alwaysMultiPolygon"/> to true.
     /// </para>
     /// </summary>
-    private static IGeometry BuildBoundaryGeometry(CMeshData mesh, List<CMeshFace> boundaryFaces, bool alwaysMultiPolygon)
+    private static Geometry BuildBoundaryGeometry(CMeshData mesh, List<CMeshFace> boundaryFaces, bool alwaysMultiPolygon)
     {
       // There will be one polygon for each connected sub mesh, in case there is more than one.
 
@@ -225,7 +224,7 @@ namespace DHI.Mesh
         Polygon boundaryPoly = BuildSubMeshBoundaryGeometry(mesh, bsb, boundaryFaces);
         if (!alwaysMultiPolygon)
           return boundaryPoly;
-        MultiPolygon multiPolygon = new MultiPolygon(new IPolygon[] { boundaryPoly });
+        MultiPolygon multiPolygon = new MultiPolygon(new Polygon[] { boundaryPoly });
         return multiPolygon;
       }
 
@@ -246,7 +245,7 @@ namespace DHI.Mesh
         }
 
         // Make boundary polygon for each sub mesh - ordered as in SubMeshInfos to get largest parts first
-        List<IPolygon> polygons = new List<IPolygon>(subMeshes.NumberOfSubMeshes);
+        List<Polygon> polygons = new List<Polygon>(subMeshes.NumberOfSubMeshes);
         foreach (SubMeshInfo subMeshInfo in subMeshes.SubMeshInfos)
         {
           List<CMeshFace> subMeshBoundaryFaces = subMeshesBoundaryFaces[subMeshInfo.SubMeshId-1];
@@ -268,7 +267,7 @@ namespace DHI.Mesh
         return null;
 
       LinearRing shell = null;
-      List<ILinearRing> holes  = new List<ILinearRing>();
+      List<LinearRing> holes  = new List<LinearRing>();
 
       // Create mesh boundary with segments
       for (int isegment = 0; isegment < segments.Count; isegment++)

@@ -32,7 +32,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="NetTopologySuite" Version="1.15.0" />
+    <PackageReference Include="NetTopologySuite" Version="2.4.0" />
   </ItemGroup>
 
   <ItemGroup>
