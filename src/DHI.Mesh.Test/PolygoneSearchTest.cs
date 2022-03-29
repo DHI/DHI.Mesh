@@ -1,13 +1,12 @@
 ﻿using System.Linq;
 using DHI.Generic.MikeZero.DFS;
 using DHI.Generic.MikeZero.DFS.dfsu;
-using GeoAPI.Geometries;
 using NetTopologySuite.Geometries;
 using NUnit.Framework;
 
 namespace DHI.Mesh.Test
 {
-  internal class PolygoneSearchTest
+  internal class PolygonSearchTest
   {
 
     [Test]

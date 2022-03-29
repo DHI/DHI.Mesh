@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using GeoAPI.Geometries;
+using NetTopologySuite.Geometries;
 
 namespace DHI.Mesh
 {
@@ -76,11 +76,8 @@ namespace DHI.Mesh
     /// </para>
     /// </summary>
     /// <param name="polygon">Polygon or multi-polygon</param>
-    public List<ElementWeight> CalculateWeights(IGeometry polygon)
+    public List<ElementWeight> CalculateWeights(Polygon polygon)
     {
-      if (!(polygon is IMultiPolygon) && !(polygon is IPolygon))
-        throw new Exception("Cannot calculate weights for geometry of type: " + polygon.GeometryType);
-
       // Find potential elements for polygon point
       Envelope targetEnvelope = polygon.EnvelopeInternal;
 
@@ -109,9 +106,9 @@ namespace DHI.Mesh
     /// <param name="polygon">Polygon or multi-polygon</param>
     /// <param name="elements">List of elements</param>
     /// </summary>
-    public List<ElementWeight> CalculateWeights(IGeometry polygon, IList<int> elements)
+    public List<ElementWeight> CalculateWeights(Geometry polygon, IList<int> elements)
     {
-      if (!(polygon is IMultiPolygon) && !(polygon is IPolygon))
+      if (!(polygon is MultiPolygon) && !(polygon is Polygon))
         throw new Exception("Cannot calculate weights for geometry of type: " + polygon.GeometryType);
 
       Envelope targetEnvelope = polygon.EnvelopeInternal;
@@ -133,9 +130,9 @@ namespace DHI.Mesh
         if (!targetEnvelope.Intersects(_mesh.ElementEnvelopeInternal(element)))
           continue;
 
-        IPolygon elementPolygon = _mesh.ElementToPolygon(element);
+        Polygon elementPolygon = _mesh.ElementToPolygon(element);
 
-        IGeometry intersection = elementPolygon.Intersection(polygon);
+        Geometry intersection = elementPolygon.Intersection(polygon);
         if (!intersection.IsEmpty)
         {
           // Target polygon and element polygon has an overlap. 

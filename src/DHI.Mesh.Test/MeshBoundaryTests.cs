@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using DHI.Generic.MikeZero.DFS;
 using DHI.Generic.MikeZero.DFS.dfsu;
-using GeoAPI.Geometries;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.IO;
 using Newtonsoft.Json;
@@ -216,8 +215,8 @@ namespace DHI.Mesh.Test
     public void BoundaryPolygonMeshOdenseTest()
     {
       string    triMesh       = UnitTestHelper.TestDataDir + "odense_rough.mesh";
-      IGeometry boundaryGeom  = BoundaryPolygonMeshTest(triMesh, false);
-      IGeometry boundaryGeom2 = BoundaryPolygonMeshTest(triMesh, true, "2");
+      Geometry boundaryGeom  = BoundaryPolygonMeshTest(triMesh, false);
+      Geometry boundaryGeom2 = BoundaryPolygonMeshTest(triMesh, true, "2");
 
       Polygon boundaryPoly = boundaryGeom as Polygon;
       Assert.AreEqual(1, boundaryPoly.Holes.Length);
@@ -245,8 +244,8 @@ namespace DHI.Mesh.Test
     public void BoundaryPolygonSMeshOdenseTest()
     {
       string    triMesh      = UnitTestHelper.TestDataDir + "odense_rough.mesh";
-      IGeometry boundaryGeom  = BoundaryPolygonSMeshTest(triMesh, false);
-      IGeometry boundaryGeom2 = BoundaryPolygonSMeshTest(triMesh, true, "2");
+      Geometry boundaryGeom  = BoundaryPolygonSMeshTest(triMesh, false);
+      Geometry boundaryGeom2 = BoundaryPolygonSMeshTest(triMesh, true, "2");
 
       Polygon boundaryPoly = boundaryGeom as Polygon;
       Assert.AreEqual(1, boundaryPoly.Holes.Length);
@@ -268,7 +267,7 @@ namespace DHI.Mesh.Test
       BoundaryPolygonSMeshTest(triMesh);
     }
 
-    public IGeometry BoundaryPolygonMeshTest(string meshPath, bool alwaysMultiPolygon = true, string extra = "")
+    public Geometry BoundaryPolygonMeshTest(string meshPath, bool alwaysMultiPolygon = true, string extra = "")
     {
 
       string fileName = Path.GetFileName(meshPath);
@@ -292,14 +291,14 @@ namespace DHI.Mesh.Test
 
       timer.ReportAndRestart("Create ");
 
-      IGeometry boundaryGeom = mesh.BuildBoundaryGeometry(alwaysMultiPolygon);
+      Geometry boundaryGeom = mesh.BuildBoundaryGeometry(alwaysMultiPolygon);
       timer.ReportAndRestart("Build  ");
 
       BoundaryPolygonWriter(fileName, "-bnd" + extra, boundaryGeom, timer);
       return boundaryGeom;
     }
 
-    public IGeometry BoundaryPolygonSMeshTest(string meshPath, bool alwaysMultiPolygon = true, string extra = "")
+    public Geometry BoundaryPolygonSMeshTest(string meshPath, bool alwaysMultiPolygon = true, string extra = "")
     {
       string   fileName = Path.GetFileName(meshPath);
 
@@ -322,14 +321,14 @@ namespace DHI.Mesh.Test
       Console.Out.WriteLine("(#nodes,#elmts)=({0},{1}) ({2})", mesh.NumberOfNodes, mesh.NumberOfElements, mesh.NumberOfNodes + mesh.NumberOfElements);
       timer.ReportAndRestart("Create ");
 
-      IGeometry boundaryGeom = mesh.BuildBoundaryGeometry(alwaysMultiPolygon);
+      Geometry boundaryGeom = mesh.BuildBoundaryGeometry(alwaysMultiPolygon);
       timer.ReportAndRestart("Build  ");
 
       BoundaryPolygonWriter(fileName, "-sbnd" + extra, boundaryGeom, timer);
       return boundaryGeom;
     }
 
-    private static void BoundaryPolygonWriter(string fileName, string extra, IGeometry boundaryGeom, Stopwatch timer)
+    private static void BoundaryPolygonWriter(string fileName, string extra, Geometry boundaryGeom, Stopwatch timer)
     {
       var    gjws    = new JsonSerializerSettings() {Formatting = Formatting.Indented};
       var    gjw     = new GeoJsonWriter() {SerializerSettings  = gjws};
@@ -344,7 +343,7 @@ namespace DHI.Mesh.Test
       {
         StreamWriter writer = new StreamWriter(UnitTestHelper.TestDataDir + "test_" + fileName + "-gp" + extra + ".txt");
         // First write all shells
-        foreach (IGeometry geometry in boundaryMPoly.Geometries)
+        foreach (Geometry geometry in boundaryMPoly.Geometries)
         {
           Polygon boundaryPoly = geometry as Polygon;
           GnuPlotWrite(writer, boundaryPoly.Shell);
@@ -352,7 +351,7 @@ namespace DHI.Mesh.Test
 
         writer.WriteLine();
         // Then write all holes
-        foreach (IGeometry geometry in boundaryMPoly.Geometries)
+        foreach (Geometry geometry in boundaryMPoly.Geometries)
         {
           Polygon boundaryPoly = geometry as Polygon;
           for (int i = 0; i < boundaryPoly.Holes.Length; i++)
@@ -367,7 +366,7 @@ namespace DHI.Mesh.Test
       }
     }
 
-    private static void GnuPlotWrite(StreamWriter writer, ILinearRing ring)
+    private static void GnuPlotWrite(StreamWriter writer, LinearRing ring)
     {
       foreach (Coordinate coord in ring.Coordinates)
       {

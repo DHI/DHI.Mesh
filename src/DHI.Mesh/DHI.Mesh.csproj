@@ -6,8 +6,8 @@
     <DefaultItemExcludes>$(DefaultItemExcludes);nuget\*.log</DefaultItemExcludes>
     <NoWarn>1591</NoWarn>
     <PackageId>DHI.Mesh</PackageId>
-    <Version>1.0.1</Version>
-    <PackageReleaseNotes></PackageReleaseNotes>
+    <Version>2.0.0-rc01</Version>
+    <PackageReleaseNotes>Using NetTopologySuite version 2.0.0</PackageReleaseNotes>
     <Company>DHI</Company>
     <Authors>dhigroup</Authors>
     <PackageLicenseExpression>BSD-3-Clause</PackageLicenseExpression>
@@ -32,7 +32,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="NetTopologySuite" Version="1.15.0" />
+    <PackageReference Include="NetTopologySuite" Version="2.0.0" />
   </ItemGroup>
 
   <ItemGroup>
